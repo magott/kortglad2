@@ -3,7 +3,7 @@
 target
 .DS_Store
 *IntegrationTest*
-project/
+metals.sbt
 target/
 .bsp/
 .metals/
