@@ -5,3 +5,6 @@ target
 *IntegrationTest*
 project/
 target/
+.bsp/
+.metals/
+.vscode/
