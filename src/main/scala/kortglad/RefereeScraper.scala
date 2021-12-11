@@ -9,48 +9,39 @@ import org.jsoup.*
 import org.jsoup.nodes.{Document, Element}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-object RefereeScraper {
-  val log: Logger = LoggerFactory.getLogger(getClass)
 
-  val fotballBaseUrl = Uri(Path("https://www.fotball.no"), Uri.Query.empty)
+object RefereeScraper:
+  val log = LoggerFactory.getLogger(getClass)
+  val fotballBaseUrl = uri"https://www.fotball.no"
+
   def refereeTemplate(fiksId: Int) =
-    fotballBaseUrl / "fotballdata" / "person" / "dommeroppdrag" +?("fiksId", fiksId)
+    fotballBaseUrl / "fotballdata" / "person" / "dommeroppdrag" +? ("fiksId", fiksId)
 
   def scrapeMatch(matchUri: Uri): MatchStat =
-    val doc = Jsoup.connect(matchUri.render).get()
+    val doc = Jsoup.connect(matchUri.toString).get()
     parseMatch(matchUri, doc)
 
   def scrapeMatches(fiksId: Int) = Try {
-    val doc = Jsoup.connect(refereeTemplate(fiksId).render).get()
-    def fix(s:String) =
-      s.indexOf('?') match
-        case -1 => fotballBaseUrl.copy(path = Path(fotballBaseUrl.path.render + s))
-        case n =>
-          val (p, q) = s.splitAt(n)
-          Uri(Path(fotballBaseUrl.path.render + p), Uri.Query(q.tail))
-
-    val (refName, urls) =
-      parseMatches(fiksId, doc)
+    val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
+    def fix(s: String) = fotballBaseUrl.updated(path = Path(s))
+    val (refName, urls) = parseMatches(fiksId, doc)
     (refName, urls.map(fix))
-    }.toOption
+  }.toOption
 
-  def findRefereeStats(fiksId: Int) = {
+  def findRefereeStats(fiksId: Int) =
+    val now = LocalDateTime.now
     System.out.println(s"Prepareing to scrape $fiksId")
-    scrapeMatches(fiksId).map{
-      case (uri, matches) => val fetched = matches.map(scrapeMatch)
-        val result =
-          fetched.filter(_.tidspunkt.isBefore(LocalDateTime.now)) match {
-            case h :: t => h :: t.takeWhile(_.inCurrentSeason)
-            case x      => x
-          }
-        RefereeStats(result, uri)
+    scrapeMatches(fiksId).map { case (uri, matches) =>
+      val fetched = matches.map(scrapeMatch)
+      val result =
+        fetched.filter(_.tidspunkt.isBefore(now)) match {
+          case h :: t => h :: t.takeWhile(_.inCurrentSeason)
+          case x      => x
+        }
+      RefereeStats(result, uri)
     }
 
-
-  }
-
-
-  def parseMatches(fiksId: Int, document: Document): (String, List[String]) = {
+  def parseMatches(fiksId: Int, document: Document): (String, List[String]) =
     val body = document.body()
     val refName = body.select(".fiks-header--person").select("h1 > a").text()
     val dommerRader = body
@@ -63,9 +54,8 @@ object RefereeScraper {
       .toList
     log.info(s"Scraping referee named $refName")
     (refName, urls)
-  }
 
-  def parseMatch(matchUri: Uri, kampDoc: Document) = {
+  def parseMatch(matchUri: Uri, kampDoc: Document) =
     val lag = kampDoc
       .select("span.match__teamname-img")
       .asScala
@@ -91,11 +81,9 @@ object RefereeScraper {
       away,
       CardStat(yellows.size(), yellowReds.size(), reds.size())
     )
-  }
 
-  def hovedDommerIkkeFutsal(rowElement:Element) =
+  def hovedDommerIkkeFutsal(rowElement: Element) =
     val cells = rowElement.select("td").asScala
-    cells.exists(_.text() == "HD") && cells.forall(!_.text().startsWith("Futsal"))
-
-
-}
+    cells.exists(_.text() == "HD") && cells.forall(
+      !_.text().startsWith("Futsal")
+    )
