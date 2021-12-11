@@ -1,0 +1,7 @@
+.idea
+.idea_modules
+target
+.DS_Store
+*IntegrationTest*
+project/
+target/
