@@ -9,3 +9,5 @@ target/
 .metals/
 .vscode/
 .bloop/
+node_modules/
+public/bundle.js*
