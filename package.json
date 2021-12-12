@@ -1,11 +1,10 @@
 {
   "name": "kortglad2",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js",
-    "watch": "esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js --watch"
+  "description": "", 
+  "scripts": {    
+    "build": "tsc && esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js",
+    "watch": "tsc --watch & esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js --watch"
   },
   "repository": {
     "type": "git",

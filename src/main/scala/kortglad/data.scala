@@ -13,11 +13,18 @@ case class FiksId(fiksId: Int) derives Params
 given Json[LocalDateTime] =
   summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
 
-case class RefereeStats(matches: List[MatchStat], refereeName: String)
-    derives Json:
-  val cardTotals = CardStat.totals(matches.map(_.cards))
-  val cardAverages = CardAvarages.from(cardTotals, matches.size)
-  val totalMatches = matches.size
+object RefereeStats:
+  def fromMatches(matches: List[MatchStat], refereeName: String) =
+    val totals = CardStat.totals(matches.map(_.cards))
+    val averages = CardAvarages.from(totals, matches.size)
+    RefereeStats(matches, refereeName, totals, averages)
+
+case class RefereeStats(
+    matches: List[MatchStat],
+    refereeName: String,
+    totals: CardStat,
+    averages: CardAvarages
+) derives Json
 
 case class MatchStat(
     fiksId: FiksId,
@@ -41,7 +48,8 @@ object MatchStat:
   def thisSeason(d: LocalDateTime) =
     d.isBefore(seasonEnd) && d.isAfter(seasonStart)
 
-case class CardAvarages(yellow: Double, yellowToRed: Double, red: Double):
+case class CardAvarages(yellow: Double, yellowToRed: Double, red: Double)
+    derives Json:
   val formatter = new DecimalFormat("0.00")
   def snittPretty =
     s"Snitt: Gule ${formatter.format(yellow)}, Gult nr 2: ${formatter

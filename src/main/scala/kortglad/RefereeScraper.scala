@@ -23,14 +23,16 @@ object RefereeScraper:
 
   def scrapeMatches(fiksId: Int) = Try {
     val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
-    def fix(s: String) = fotballBaseUrl.updated(path = Path(s))
+    // TODO
+    def fix(s: String) =
+      Uri(java.net.URI(fotballBaseUrl.toString + s))
     val (refName, urls) = parseMatches(fiksId, doc)
     (refName, urls.map(fix))
   }.toOption
 
   def findRefereeStats(fiksId: Int) =
     val now = LocalDateTime.now
-    System.out.println(s"Prepareing to scrape $fiksId")
+    System.out.println(s"Preparing to scrape $fiksId")
     scrapeMatches(fiksId).map { case (uri, matches) =>
       val fetched = matches.map(scrapeMatch)
       val result =
@@ -38,7 +40,7 @@ object RefereeScraper:
           case h :: t => h :: t.takeWhile(_.inCurrentSeason)
           case x      => x
         }
-      RefereeStats(result, uri)
+      RefereeStats.fromMatches(result, uri)
     }
 
   def parseMatches(fiksId: Int, document: Document): (String, List[String]) =
