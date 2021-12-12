@@ -26,12 +26,22 @@ const App: React.VFC = () => {
   const [fetching, setFetching] = React.useState(false)
   const [dommer, setDommer] = React.useState('')
   const [refereeStats, setRefereeStats] = React.useState<RefereeStats>()
+  const [statistikk, setStatistikk] = React.useState(false)
 
   const fiksId = React.useMemo(() => {
     if (dommer) {
-      const url = new URL(dommer)
-      const search = new URLSearchParams(url.search)
-      return search.get('fiksId')
+      const parsed = Number.parseInt(dommer)
+      if (parsed) {
+        return parsed
+      } else {
+        try {
+          const url = new URL(dommer)
+          const search = new URLSearchParams(url.search)
+          return search.get('fiksId')
+        } catch (error) {
+          return null
+        }
+      }
     } else {
       return null
     }
@@ -102,6 +112,43 @@ const App: React.VFC = () => {
               </tr>
             </tbody>
           </Table>
+          <h5>
+            <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
+              Vis statistikk per kamp ({refereeStats.matches.length})
+            </Button>
+          </h5>
+          {statistikk && (
+            <Table>
+              <thead>
+                <tr>
+                  <th>Dato</th>
+                  <th>Kamp</th>
+                  <th>Statistikk</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {refereeStats.matches.map((match) => (
+                  <tr>
+                    <td>{match.tidspunkt.replace('T', ' ')}</td>
+                    <td>{match.home}</td>
+                    <td className="small">
+                      Røde {match.cards.red}
+                      <br />
+                      Gult nr 2 {match.cards.yellowToRed}
+                      <br />
+                      Gult {match.cards.yellow}
+                    </td>
+                    <td>
+                      <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`}>
+                        fotball.no
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
         </div>
       )}
     </Container>
