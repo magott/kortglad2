@@ -13,17 +13,30 @@ case class FiksId(fiksId: Int) derives Params
 given Json[LocalDateTime] =
   summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
 
+given Json[Year] = summon[Json[Int]].xmap(Year.of, _.getValue)
+
+case class RefereeSeason(
+    season: Year,
+    averages: CardAverages,
+    totals: CardStat,
+    matches: List[MatchStat]
+) derives Json
+
 object RefereeStats:
   def fromMatches(matches: List[MatchStat], refereeName: String) =
-    val totals = CardStat.totals(matches.map(_.cards))
-    val averages = CardAvarages.from(totals, matches.size)
-    RefereeStats(matches, refereeName, totals, averages)
+    val bySeason = matches.groupBy(_.tidspunkt.getYear)
+    val seasons = bySeason
+      .map((year, matchstats) =>
+        val totals = CardStat.totals(matches.map(_.cards))
+        val averages = CardAverages.from(totals, matches.size)
+        RefereeSeason(Year.of(year), averages, totals, matchstats)
+      )
+      .toList
+    RefereeStats(refereeName, seasons)
 
 case class RefereeStats(
-    matches: List[MatchStat],
     refereeName: String,
-    totals: CardStat,
-    averages: CardAvarages
+    seasons: List[RefereeSeason]
 ) derives Json
 
 case class MatchStat(
@@ -48,17 +61,17 @@ object MatchStat:
   def thisSeason(d: LocalDateTime) =
     d.isBefore(seasonEnd) && d.isAfter(seasonStart)
 
-case class CardAvarages(yellow: Double, yellowToRed: Double, red: Double)
+case class CardAverages(yellow: Double, yellowToRed: Double, red: Double)
     derives Json:
   val formatter = new DecimalFormat("0.00")
   def snittPretty =
     s"Snitt: Gule ${formatter.format(yellow)}, Gult nr 2: ${formatter
       .format(yellowToRed)}, Røde ${formatter.format(red)}"
 
-object CardAvarages:
+object CardAverages:
   def from(totals: CardStat, matches: Int) =
     import totals.*
-    CardAvarages(
+    CardAverages(
       yellow.toDouble / matches,
       yellowToRed.toDouble / matches,
       red.toDouble / matches

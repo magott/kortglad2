@@ -15,11 +15,16 @@ interface MatchStat {
   cards: CardStat
 }
 
-interface RefereeStats {
+interface RefereeSeason {
+  season: bigint
   matches: MatchStat[]
-  refereeName: string
   totals: CardStat
   averages: CardStat
+}
+
+interface RefereeStats {
+  refereeName: string
+  seasons: RefereeSeason[]
 }
 
 const App: React.VFC = () => {
@@ -64,7 +69,7 @@ const App: React.VFC = () => {
     <Container fluid>
       <h1>Kortglad</h1>
       <p>Sjekk kortstatistikk for dommer innev&aelig;rende sesong</p>
-      <p>(Futsal er ikke med)</p>
+      <p>(Futsal er ikke med!)</p>
       <Form>
         <Row>
           <Col xs={7}>
@@ -83,52 +88,51 @@ const App: React.VFC = () => {
           </Col>
         </Row>
       </Form>
-      {refereeStats && (
-        <div>
-          <h4>{refereeStats.refereeName}</h4>
-          <Table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Snitt</th>
-                <th>Totalt</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Gult</td>
-                <td>{refereeStats.averages.yellow.toFixed(2)}</td>
-                <td>{refereeStats.totals.yellow}</td>
-              </tr>
-              <tr>
-                <td>Gult nr. 2</td>
-                <td>{refereeStats.averages.yellowToRed.toFixed(2)}</td>
-                <td>{refereeStats.totals.yellowToRed}</td>
-              </tr>
-              <tr>
-                <td>Rødt</td>
-                <td>{refereeStats.averages.red.toFixed(2)}</td>
-                <td>{refereeStats.totals.red}</td>
-              </tr>
-            </tbody>
-          </Table>
-          <h5>
-            <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
-              Vis statistikk per kamp ({refereeStats.matches.length})
-            </Button>
-          </h5>
-          {statistikk && (
+      {refereeStats && <div>
+        <h4>{refereeStats.refereeName}</h4>
+        <Table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Snitt</th>
+              <th>Totalt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gult</td>
+              <td>{refereeStats.seasons[0].averages.yellow.toFixed(2)}</td>
+              <td>{refereeStats.seasons[0].totals.yellow}</td>
+            </tr>
+            <tr>
+              <td>Gult nr. 2</td>
+              <td>{refereeStats.seasons[0].averages.yellowToRed.toFixed(2)}</td>
+              <td>{refereeStats.seasons[0].totals.yellowToRed}</td>
+            </tr>
+            <tr>
+              <td>Rødt</td>
+              <td>{refereeStats.seasons[0].averages.red.toFixed(2)}</td>
+              <td>{refereeStats.seasons[0].totals.red}</td>
+            </tr>
+          </tbody>
+        </Table>
+        <h5>
+          <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
+            Vis statistikk per kamp ({refereeStats.seasons[0].matches.length})
+          </Button>
+        </h5>
+        {statistikk && (
             <Table>
               <thead>
-                <tr>
-                  <th>Dato</th>
-                  <th>Kamp</th>
-                  <th>Statistikk</th>
-                  <th>Link</th>
-                </tr>
+              <tr>
+                <th>Dato</th>
+                <th>Kamp</th>
+                <th>Statistikk</th>
+                <th>Link</th>
+              </tr>
               </thead>
               <tbody>
-                {refereeStats.matches.map((match) => (
+              {refereeStats.matches.map((match) => (
                   <tr>
                     <td>{match.tidspunkt.replace('T', ' ')}</td>
                     <td>{match.home}</td>
@@ -145,12 +149,12 @@ const App: React.VFC = () => {
                       </a>
                     </td>
                   </tr>
-                ))}
+              ))}
               </tbody>
             </Table>
-          )}
-        </div>
-      )}
+        )}
+      </div>
+      }
     </Container>
   )
 }
