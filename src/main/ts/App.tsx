@@ -132,7 +132,7 @@ const App: React.VFC = () => {
               </tr>
               </thead>
               <tbody>
-              {refereeStats.matches.map((match) => (
+              {refereeStats.seasons[0].matches.map((match) => (
                   <tr>
                     <td>{match.tidspunkt.replace('T', ' ')}</td>
                     <td>{match.home}</td>
