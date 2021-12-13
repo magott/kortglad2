@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Col, Container, Form, Row, Spinner, Table } from 'react-bootstrap'
+import { Button, Col, Container, Form, Row, Spinner, Table, Collapse, Accordion } from 'react-bootstrap'
 
 interface CardStat {
   yellow: number
@@ -90,69 +90,83 @@ const App: React.VFC = () => {
       </Form>
       {refereeStats && <div>
         <h4>{refereeStats.refereeName}</h4>
-        <Table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Snitt</th>
-              <th>Totalt</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Gult</td>
-              <td>{refereeStats.seasons[0].averages.yellow.toFixed(2)}</td>
-              <td>{refereeStats.seasons[0].totals.yellow}</td>
-            </tr>
-            <tr>
-              <td>Gult nr. 2</td>
-              <td>{refereeStats.seasons[0].averages.yellowToRed.toFixed(2)}</td>
-              <td>{refereeStats.seasons[0].totals.yellowToRed}</td>
-            </tr>
-            <tr>
-              <td>Rødt</td>
-              <td>{refereeStats.seasons[0].averages.red.toFixed(2)}</td>
-              <td>{refereeStats.seasons[0].totals.red}</td>
-            </tr>
-          </tbody>
-        </Table>
-        <h5>
-          <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
-            Vis statistikk per kamp ({refereeStats.seasons[0].matches.length})
-          </Button>
-        </h5>
-        {statistikk && (
-            <Table>
-              <thead>
-              <tr>
-                <th>Dato</th>
-                <th>Kamp</th>
-                <th>Statistikk</th>
-                <th>Link</th>
-              </tr>
-              </thead>
-              <tbody>
-              {refereeStats.seasons[0].matches.map((match) => (
-                  <tr>
-                    <td>{match.tidspunkt.replace('T', ' ')}</td>
-                    <td>{match.home}</td>
-                    <td className="small">
-                      Røde {match.cards.red}
-                      <br />
-                      Gult nr 2 {match.cards.yellowToRed}
-                      <br />
-                      Gult {match.cards.yellow}
-                    </td>
-                    <td>
-                      <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`}>
-                        fotball.no
-                      </a>
-                    </td>
-                  </tr>
-              ))}
-              </tbody>
-            </Table>
-        )}
+        {refereeStats.seasons && refereeStats.seasons.length > 0 &&
+            <>
+              <Accordion>
+                {refereeStats.seasons.map((season) =>
+                    <Accordion.Item eventKey="{season.season}">
+                      <Accordion.Header>{season.season} - {season.averages.yellow.toFixed(2)} snitt gule - {(season.averages.yellowToRed + season.averages.red).toFixed(2)} snitt røde</Accordion.Header>
+                      <Accordion.Body>
+                        <Table>
+                          <thead>
+                          <tr>
+                            <th></th>
+                            <th>Snitt</th>
+                            <th>Totalt</th>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          <tr>
+                            <td>Gult</td>
+                            <td>{season.averages.yellow.toFixed(2)}</td>
+                            <td>{season.totals.yellow}</td>
+                          </tr>
+                          <tr>
+                            <td>Gult nr. 2</td>
+                            <td>{season.averages.yellowToRed.toFixed(2)}</td>
+                            <td>{season.totals.yellowToRed}</td>
+                          </tr>
+                          <tr>
+                            <td>Rødt</td>
+                            <td>{season.averages.red.toFixed(2)}</td>
+                            <td>{season.totals.red}</td>
+                          </tr>
+                          </tbody>
+                        </Table>
+                        <h5>
+                          <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
+                            Vis statistikk per kamp ({season.matches.length})
+                          </Button>
+                        </h5>
+                        {statistikk && (
+                            <Table>
+                              <thead>
+                              <tr>
+                                <th>Dato</th>
+                                <th>Kamp</th>
+                                <th>Statistikk</th>
+                                <th>Link</th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              {season.matches.map((match) => (
+                                  <tr>
+                                    <td>{match.tidspunkt.replace('T', ' ')}</td>
+                                    <td>{match.home}</td>
+                                    <td className="small">
+                                      Røde {match.cards.red}
+                                      <br/>
+                                      Gult nr 2 {match.cards.yellowToRed}
+                                      <br/>
+                                      Gult {match.cards.yellow}
+                                    </td>
+                                    <td>
+                                      <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`}>
+                                        fotball.no
+                                      </a>
+                                    </td>
+                                  </tr>
+                              ))}
+                              </tbody>
+                            </Table>
+                        )}
+                      </Accordion.Body>
+                    </Accordion.Item>
+                )
+                }
+              </Accordion>
+            </>
+        }
       </div>
       }
     </Container>
