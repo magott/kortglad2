@@ -16,7 +16,7 @@ interface MatchStat {
 }
 
 interface RefereeSeason {
-  season: bigint
+  season: number
   matches: MatchStat[]
   totals: CardStat
   averages: CardStat
