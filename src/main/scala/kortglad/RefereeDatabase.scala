@@ -6,8 +6,10 @@ import bloque.db.*
 import java.time.Year
 
 case class DbReferee(fiksId: FiksId, name: String) derives Row
+
 object DbSeason:
-  given Row[List[MatchStat]] = jsonb
+  given Row[List[MatchStat]] = jsonb[Map[String, MatchStat]]
+    .imap(_.values.toList, _.map(v => (v.fiksId.fiksId.toString -> v)).toMap)
 case class DbSeason(year: Year, matchStats: List[MatchStat]) derives Row
 
 def refereeById(fiksId: FiksId) =
