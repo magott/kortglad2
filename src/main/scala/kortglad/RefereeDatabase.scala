@@ -7,7 +7,7 @@ import java.time.Year
 
 case class DbReferee(fiksId: FiksId, name: String) derives Row
 object DbSeason:
-  given Row[List[MatchStat]] = jsonb[List[MatchStat]]
+  given Row[List[MatchStat]] = jsonb
 case class DbSeason(year: Year, matchStats: List[MatchStat]) derives Row
 
 def refereeById(fiksId: FiksId) =

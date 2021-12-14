@@ -10,17 +10,15 @@ import bloque.http.Json
 import java.sql.Types
 import java.sql.ResultSet
 import org.postgresql.util.PGobject
+import java.time.OffsetDateTime
 
-given Row[Object] =
-  Row.jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
-given Row[PGobject] =
-  Row[Object].imap(_.asInstanceOf[PGobject], identity)
+given Row[PGobject] = Row
+  .jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
+  .imap(_.asInstanceOf[PGobject], identity)
 
-/*
-  object Thing:
-    given Row[Thing] = jsonb[Thing]
-  case class Thing(age:Int, name:String) derives Json
- */
+given Row[OffsetDateTime] = Row
+  .jdbc(Types.TIMESTAMP_WITH_TIMEZONE, Nil, _.getObject(_), _.setObject(_, _))
+  .imap(_.asInstanceOf[OffsetDateTime], identity)
 
 def jsonb[A](using j: Json[A]): Row[A] =
   def read(pg: PGobject) = Json.read(pg.getValue, false)
@@ -32,6 +30,7 @@ def jsonb[A](using j: Json[A]): Row[A] =
   Row[PGobject].imap(read, write)
 
 import scala.util.Using
+import java.time.OffsetDateTime
 
 @main def main =
   Using.resource(HikariDataSource()) { ds =>
