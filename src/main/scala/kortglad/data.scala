@@ -8,6 +8,8 @@ import bloque.db.*
 
 object FiksId:
   given Json[FiksId] = summon[Json[Int]].xmap(apply, _.fiksId)
+  given fvar: Var[FiksId] = summon[Var[Int]].xmap(apply, _.fiksId)
+  export fvar.unapply
 
 case class FiksId(fiksId: Int) derives Params, Row
 

@@ -2,7 +2,8 @@ create table referee
 (
     fiks_id int primary key,
     name    text,
-    name_tsv tsvector generated always as (to_tsvector('simple', name)) stored
+    name_tsv tsvector generated always as (to_tsvector('simple', name)) stored,
+    last_sync timestamptz
 );
 
 create index on referee using gin(name_tsv);
