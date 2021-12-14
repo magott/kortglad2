@@ -95,8 +95,10 @@ const App: React.VFC = () => {
                         <Accordion>
                             {refereeStats.seasons.map((season) =>
                                 <Accordion.Item eventKey="{season.season}">
-                                    <Accordion.Header>{season.season} - {season.averages.yellow.toFixed(2)} snitt gule
-                                        - {(season.averages.yellowToRed + season.averages.red).toFixed(2)} snitt røde</Accordion.Header>
+                                    <Accordion.Header><strong>{season.season}</strong> &nbsp;
+                                        <small className="text-muted">{season.averages.yellow.toFixed(2)} gule kort per kamp
+                                        - {(season.averages.yellowToRed + season.averages.red).toFixed(2)} røde kort per kamp </small>
+                                    </Accordion.Header>
                                     <Accordion.Body>
                                         <Table>
                                             <thead>
@@ -126,7 +128,7 @@ const App: React.VFC = () => {
                                         </Table>
                                         <h5>
                                             <Button variant="primary" onClick={() => setStatistikk(!statistikk)}>
-                                                Vis statistikk per kamp ({season.matches.length})
+                                                {!statistikk ? <>Vis statistikk per kamp ({season.matches.length})</> : <>Skjul kamper</>}
                                             </Button>
                                         </h5>
                                         {statistikk && (

@@ -24,7 +24,7 @@ case class RefereeSeason(
 
 object RefereeStats:
   def fromMatches(matches: List[MatchStat], refereeName: String) =
-    val bySeason = matches.groupBy(_.tidspunkt.getYear)
+    val bySeason = matches.groupBy(_.season)
     val seasons = bySeason
       .map((year, matchstats) =>
         val totals = CardStat.totals(matches.map(_.cards))
@@ -47,6 +47,7 @@ case class MatchStat(
     cards: CardStat
 ) derives Json:
   def inCurrentSeason = MatchStat.thisSeason(tidspunkt)
+  def season = tidspunkt.getYear
 
 object MatchStat:
   def seasonYear =
