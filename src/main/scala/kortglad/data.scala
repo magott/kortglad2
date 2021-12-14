@@ -4,11 +4,12 @@ import java.net.URI
 import java.text.DecimalFormat
 import java.time.{LocalDate, LocalDateTime, Month, Year}
 import bloque.http.*
+import bloque.db.*
 
 object FiksId:
   given Json[FiksId] = summon[Json[Int]].xmap(apply, _.fiksId)
 
-case class FiksId(fiksId: Int) derives Params
+case class FiksId(fiksId: Int) derives Params, Row
 
 given Json[LocalDateTime] =
   summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
