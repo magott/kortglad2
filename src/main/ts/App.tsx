@@ -95,9 +95,16 @@ const App: React.VFC = () => {
                         <Accordion>
                             {refereeStats.seasons.map((season) =>
                                 <Accordion.Item eventKey="{season.season}">
-                                    <Accordion.Header><strong>{season.season}</strong> &nbsp;
-                                        <small className="text-muted">{season.averages.yellow.toFixed(2)} gule kort per kamp
-                                        - {(season.averages.yellowToRed + season.averages.red).toFixed(2)} røde kort per kamp </small>
+                                    <Accordion.Header>
+                                        <div className="col align-self-start">
+                                            <strong>{season.season}</strong>
+                                        </div>
+                                        <div className="col align-self-center">
+                                            <small className="text-muted">
+                                                <div>{season.averages.yellow.toFixed(2)} gule kort per kamp</div>
+                                                <div>{(season.averages.yellowToRed + season.averages.red).toFixed(2)} røde kort per kamp</div>
+                                            </small>
+                                        </div>
                                     </Accordion.Header>
                                     <Accordion.Body>
                                         <Table>
