@@ -15,6 +15,7 @@ given Json[LocalDateTime] =
   summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
 
 given Json[Year] = summon[Json[Int]].xmap(Year.of, _.getValue)
+given Row[Year] = Row[Int].imap(Year.of, _.getValue)
 
 case class RefereeSeason(
     season: Year,
