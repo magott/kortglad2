@@ -17,7 +17,12 @@ given Row[PGobject] = Row
   .imap(_.asInstanceOf[PGobject], identity)
 
 given Row[OffsetDateTime] = Row
-  .jdbc(Types.TIMESTAMP_WITH_TIMEZONE, Nil, _.getObject(_), _.setObject(_, _))
+  .jdbc(
+    Types.TIMESTAMP_WITH_TIMEZONE,
+    Nil,
+    _.getObject(_, classOf[OffsetDateTime]),
+    _.setObject(_, _)
+  )
   .imap(_.asInstanceOf[OffsetDateTime], identity)
 
 def jsonb[A](using j: Json[A]): Row[A] =
