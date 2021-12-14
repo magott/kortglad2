@@ -70,25 +70,27 @@ const App: React.VFC = () => {
             <h1>Kortglad</h1>
             <p>Sjekk kortstatistikk for dommer innev&aelig;rende sesong</p>
             <p>(Futsal er ikke med!)</p>
-            <Form>
-                <Row>
-                    <Col xs={7}>
-                        <Form.Control
-                            type="input"
-                            value={dommer}
-                            onChange={(e) => setDommer(e.target.value)}
-                            placeholder="https://www.fotball.no/fotballdata/person/dommeroppdrag/?fiksId=xxxx"
-                        />
-                    </Col>
-                    <Col xs={3}>
-                        <Button variant="primary" onClick={() => hentStatistikk()} disabled={fiksId == null}>
-                            {fetching && <Spinner as="span" animation="border" size="sm"/>}
-                            Hent statistikk
-                        </Button>
-                    </Col>
-                </Row>
-            </Form>
-            {refereeStats && <div>
+            <p>
+                <Form>
+                    <Row>
+                        <Col xs={7}>
+                            <Form.Control
+                                type="input"
+                                value={dommer}
+                                onChange={(e) => setDommer(e.target.value)}
+                                placeholder="https://www.fotball.no/fotballdata/person/dommeroppdrag/?fiksId=xxxx"
+                            />
+                        </Col>
+                        <Col xs={3}>
+                            <Button variant="primary" onClick={() => hentStatistikk()} disabled={fiksId == null}>
+                                {fetching && <Spinner as="span" animation="border" size="sm"/>}
+                                Hent statistikk
+                            </Button>
+                        </Col>
+                    </Row>
+                </Form>
+            </p>
+            {refereeStats && <p>
                 <h4>{refereeStats.refereeName}</h4>
                 {refereeStats.seasons && refereeStats.seasons.length > 0 &&
                     <>
@@ -177,7 +179,7 @@ const App: React.VFC = () => {
                         </Accordion>
                     </>
                 }
-            </div>
+            </p>
             }
         </Container>
     )
