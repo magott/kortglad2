@@ -8,7 +8,7 @@ import {
   Spinner,
   Table,
   Collapse,
-  Accordion,
+  Accordion, Alert,
 } from 'react-bootstrap'
 
 interface CardStat {
@@ -37,6 +37,10 @@ interface RefereeStats {
   seasons: RefereeSeason[]
 }
 
+interface Error {
+  message: string
+}
+
 const App: React.VFC = () => {
   const [fetching, setFetching] = React.useState(false)
   const [dommer, setDommer] = React.useState(
@@ -44,6 +48,7 @@ const App: React.VFC = () => {
   )
   const [refereeStats, setRefereeStats] = React.useState<RefereeStats>()
   const [statistikk, setStatistikk] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<String>()
 
   const fiksId = React.useMemo(() => {
     if (dommer) {
@@ -69,10 +74,17 @@ const App: React.VFC = () => {
     if (fiksId !== null) {
       history.pushState({}, '', `?fiksId=${fiksId}`)
       try {
+        setErrorMessage(undefined)
         setFetching(true)
         const response = await fetch(`/referee/${fiksId}`)
-        const stats: RefereeStats = await response.json()
-        setRefereeStats(stats)
+        if(response.ok) {
+          const stats: RefereeStats = await response.json()
+          setRefereeStats(stats)
+        } else {
+          console.log("oh nos", response)
+          const error: Error = await response.json()
+          setErrorMessage(error.message || "Ukjent feil")
+        }
       } finally {
         setFetching(false)
       }
@@ -84,7 +96,7 @@ const App: React.VFC = () => {
   return (
     <Container fluid>
       <h1>Kortglad</h1>
-      <p>Sjekk kortstatistikk for dommer innev&aelig;rende sesong</p>
+      <p>Sjekk kortstatistikk fra og med 2021-sesongen</p>
       <p>(Futsal er ikke med!)</p>
       <p>
         <Form>
@@ -102,6 +114,16 @@ const App: React.VFC = () => {
                 {fetching && <Spinner as="span" animation="border" size="sm" />}
                 Hent statistikk
               </Button>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              {errorMessage && <Alert variant="danger" onClose={() => setErrorMessage(undefined)} dismissible>
+                <Alert.Heading>{errorMessage}</Alert.Heading>
+                <p>
+                  Har du skrevet riktig adresse til dommerdagbok fra fotball.no?
+                </p>
+              </Alert>}
             </Col>
           </Row>
         </Form>

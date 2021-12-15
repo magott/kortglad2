@@ -25,9 +25,10 @@ object RefereeScraper:
     val doc = Jsoup.connect(matchTemplate(fiksId).toString).get()
     parseMatch(fiksId, doc)
 
-  def matchList(fiksId: FiksId) =
+  def matchList(fiksId: FiksId) = Try {
     val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
-    Some(parseMatches(doc))
+    parseMatches(doc)
+  }.toOption
 
   def scrapeMatches(fiksId: FiksId): Option[(String, List[FiksId])] =
     val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()

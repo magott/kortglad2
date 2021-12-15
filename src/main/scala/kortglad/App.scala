@@ -10,7 +10,10 @@ object App:
         try {
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
             case Some(rStats) => Ok(rStats.json)
-            case None         => NotFound()
+            case None =>
+              NotFound(
+                Error(s"Fant ikke dommer med fiks id ${fiksId.fiksId}").json
+              )
         } catch {
           case e =>
             e.printStackTrace()
@@ -19,3 +22,5 @@ object App:
 
       case _ => request.delegate
     }
+
+case class Error(message: String) derives Json
