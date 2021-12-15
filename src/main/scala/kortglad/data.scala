@@ -30,10 +30,15 @@ object RefereeStats:
   def fromMatches(matches: List[MatchStat], refereeName: String) =
     val bySeason = matches.groupBy(_.season)
     val seasons = bySeason
-      .map((year, matchstats) =>
+      .map((year, matchstats: List[MatchStat]) =>
         val totals = CardStat.totals(matches.map(_.cards))
         val averages = CardAverages.from(totals, matches.size)
-        RefereeSeason(Year.of(year), averages, totals, matchstats)
+        RefereeSeason(
+          Year.of(year),
+          averages,
+          totals,
+          matchstats.sortBy(_.tidspunkt)(Ordering[LocalDateTime].reverse)
+        )
       )
       .toList
     RefereeStats(refereeName, seasons)

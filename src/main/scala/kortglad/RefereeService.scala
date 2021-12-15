@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 
 import java.time.OffsetDateTime
 import java.time.Year
+import java.time.LocalDate
 
 class RefereeService(db: Db) {
 
@@ -19,8 +20,11 @@ class RefereeService(db: Db) {
             .generatedKeys[Option[OffsetDateTime]]("last_sync")
             .unique
           val cutoff = lastSync.map(_.minusDays(3).toLocalDate)
+          logger.info(lastSync.toString)
+          logger.info(cutoff.toString)
+          logger.info(matchList.idAndKickoffs.mkString(","))
           matchList.idAndKickoffs.filter(idAndKickoff =>
-            cutoff.forall(_.isAfter(idAndKickoff.kickoff))
+            cutoff.forall(_.isBefore(idAndKickoff.kickoff))
           )
         }
 

@@ -62,8 +62,8 @@ object RefereeScraper:
     val dommerRader = body
       .select("tr")
       .asScala
-      .filter(hovedDommerIkkeFutsal)
-    val matchIds = dommerRader
+      .filter(row => hovedDommerIkkeFutsal(row) && spiltKamp(row))
+    val fiksIdAndKickoff = dommerRader
       .map(tr =>
         FiksIdAndKickoff(
           Uri(java.net.URI(tr.select("td > a").get(1).attr("href")))
@@ -75,8 +75,8 @@ object RefereeScraper:
         )
       )
       .toList
-    log.info(matchIds.mkString)
-    MatchList(refName, matchIds)
+    log.info(fiksIdAndKickoff.mkString)
+    MatchList(refName, fiksIdAndKickoff)
 
   def parseMatch(fiksId: FiksId, kampDoc: Document) =
     val lag = kampDoc
@@ -110,3 +110,11 @@ object RefereeScraper:
     cells.exists(_.text() == "HD") && cells.forall(
       !_.text().startsWith("Futsal")
     )
+
+  def spiltKamp(rowElement: Element) =
+    LocalDate
+      .parse(
+        rowElement.selectFirst("td").text(),
+        DateTimeFormatter.ofPattern("dd.MM.yyyy")
+      )
+      .isAfter(LocalDate.now())

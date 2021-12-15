@@ -23,7 +23,6 @@ given Row[OffsetDateTime] = Row
     _.getObject(_, classOf[OffsetDateTime]),
     _.setObject(_, _)
   )
-  .imap(_.asInstanceOf[OffsetDateTime], identity)
 
 def jsonb[A](using j: Json[A]): Row[A] =
   def read(pg: PGobject) = Json.read(pg.getValue, false)
