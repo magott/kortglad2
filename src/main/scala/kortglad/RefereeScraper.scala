@@ -117,4 +117,4 @@ object RefereeScraper:
         rowElement.selectFirst("td").text(),
         DateTimeFormatter.ofPattern("dd.MM.yyyy")
       )
-      .isAfter(LocalDate.now())
+      .isBefore(LocalDate.now())

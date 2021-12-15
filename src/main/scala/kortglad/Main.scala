@@ -3,14 +3,17 @@ package kortglad
 import bloque.db.Db
 import bloque.db.transactional
 import bloque.jetty.*
-import com.zaxxer.hikari.HikariDataSource
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.flywaydb.core.Flyway
 import bloque.db.Row
 import bloque.http.Json
+
 import java.sql.Types
 import java.sql.ResultSet
 import org.postgresql.util.PGobject
+
 import java.time.OffsetDateTime
+import scala.util.Properties
 
 given Row[PGobject] = Row
   .jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
@@ -37,14 +40,35 @@ import scala.util.Using
 import java.time.OffsetDateTime
 
 @main def main =
-  Using.resource(HikariDataSource()) { ds =>
-    ds.setUsername("postgres")
-    ds.setPassword("postgres")
-    ds.setJdbcUrl("jdbc:postgresql://localhost:5440/postgres")
+  val hikariConfig = Properties
+    .envOrNone("DATABASE_URL")
+    .map(databaseUrlToHikariConfig)
+    .getOrElse {
+      val config = HikariConfig()
+      config.setJdbcUrl("jdbc:postgresql://localhost:5440/postgres")
+      config.setUsername("postgres")
+      config.setPassword("postgres")
+      config
+    }
+
+  Using.resource(HikariDataSource(hikariConfig)) { ds =>
     val tx = Db.fromDataSource(ds).transactional
     val flyway = Flyway.configure().dataSource(ds).load()
     flyway.migrate()
-    Jetty(8080, "./public") {
+    val port = Properties.envOrElse("PORT", "8080").toInt
+    Jetty(port, "./public") {
       App.run(tx)
     }
   }
+
+def databaseUrlToHikariConfig(dbUriString: String) =
+  val dbUri = java.net.URI.create(dbUriString)
+  val username = dbUri.getUserInfo.split(":")(0)
+  val password = dbUri.getUserInfo.split(":")(1)
+  val jdbcUrl =
+    s"jdbc:postgresql://${dbUri.getHost}:${dbUri.getPort}${dbUri.getPath}?sslmode=require"
+  val config = HikariConfig()
+  config.setJdbcUrl(jdbcUrl)
+  config.setUsername(username)
+  config.setPassword(password)
+  config
