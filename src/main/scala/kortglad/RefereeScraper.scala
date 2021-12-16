@@ -27,36 +27,21 @@ object RefereeScraper:
 
   def matchList(fiksId: FiksId) = Try {
     val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
-    parseMatches(doc)
+    parseMatchList(doc)
   }.toOption
 
   def scrapeMatches(fiksId: FiksId): Option[(String, List[FiksId])] =
-    val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
-    val MatchList(refName, idAndKickoffs) = parseMatches(doc)
-    Some(
-      (
-        refName,
-        idAndKickoffs.map(_.fiksId)
-      )
-    )
-
-  def findRefereeStats(fiksId: FiksId) =
-    val now = LocalDateTime.now
-    System.out.println(s"Preparing to scrape $fiksId")
-    scrapeMatches(fiksId).map { case (uri, matches) =>
-      val fetched = matches.map(scrapeMatch)
-      val result =
-        fetched.filter(_.tidspunkt.isBefore(now)) match {
-          case h :: t => h :: t.takeWhile(_.inCurrentSeason)
-          case x      => x
-        }
-      RefereeStats.fromMatches(result, uri)
-    }
+    val doc = Try {
+      Jsoup.connect(refereeTemplate(fiksId).toString).get()
+    }.toOption
+    doc
+      .map(parseMatchList)
+      .map(ml => (ml.refName, ml.idAndKickoffs.map(_.fiksId)))
 
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
 
-  def parseMatches(document: Document): MatchList =
+  def parseMatchList(document: Document): MatchList =
     val body = document.body()
     val refName = body.select(".fiks-header--person").select("h1 > a").text()
     log.info(s"Scraping referee named $refName")
