@@ -31,8 +31,8 @@ object RefereeStats:
     val bySeason = matches.groupBy(_.season)
     val seasons = bySeason
       .map((year, matchstats: List[MatchStat]) =>
-        val totals = CardStat.totals(matches.map(_.cards))
-        val averages = CardAverages.from(totals, matches.size)
+        val totals = CardStat.totals(matchstats.map(_.cards))
+        val averages = CardAverages.from(totals, matchstats.size)
         RefereeSeason(
           Year.of(year),
           averages,
@@ -41,6 +41,7 @@ object RefereeStats:
         )
       )
       .toList
+      .sortBy(_.season)(Ordering[Year].reverse)
     RefereeStats(refereeName, seasons)
 
 case class RefereeStats(
@@ -57,6 +58,7 @@ case class MatchStat(
 ) derives Json:
   def inCurrentSeason = MatchStat.thisSeason(tidspunkt)
   def season = tidspunkt.getYear
+  def year = Year.of(season)
 
 object MatchStat:
   def seasonYear =

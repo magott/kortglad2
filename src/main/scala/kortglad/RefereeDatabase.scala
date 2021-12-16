@@ -37,10 +37,13 @@ def upsertReferee(fiksId: FiksId, name: String) =
     name=excluded.name
   """.update
 
-def upsertSeason(fiksId: FiksId, year: Year, matchStats: DbMatchStats) =
+def upsertMatch(refereeId: FiksId, matchStat: MatchStat) =
+  upsertSeason(refereeId, matchStat.year, DbMatchStats(List(matchStat)))
+
+def upsertSeason(refereeId: FiksId, year: Year, matchStats: DbMatchStats) =
   sql"""
        insert into referee_season(referee_id, year, matches) 
-       values($fiksId, $year, $matchStats)
+       values($refereeId, $year, $matchStats)
        on conflict (referee_id, year) do update set
        matches = referee_season.matches || excluded.matches
        """.update

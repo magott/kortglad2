@@ -21,6 +21,17 @@ object RefereeScraper:
   def matchTemplate(s: FiksId) =
     fotballBaseUrl / "fotballdata" / "kamp" +? ("fiksId", s.fiksId)
 
+  def scrapeSingleMatch(fiksId: FiksId) =
+    Try {
+      Jsoup.connect(matchTemplate(fiksId).toString).get()
+    }.toOption
+
+  def extractRefereeFromSingleMatch(kampDoc: Document) =
+    val dommerLink =
+      kampDoc.select("div > p > span:contains(Dommer:) + strong > a")
+    val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
+    Referee(fiksId, dommerLink.text())
+
   def scrapeMatch(fiksId: FiksId): MatchStat =
     val doc = Jsoup.connect(matchTemplate(fiksId).toString).get()
     parseMatch(fiksId, doc)
@@ -40,6 +51,8 @@ object RefereeScraper:
 
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
+  case class Referee(fiksId: FiksId, name: String)
+//  case class SingleMatch(refName: String, refFiksId: FiksId, stats: MatchStat)
 
   def parseMatchList(document: Document): MatchList =
     val body = document.body()
@@ -80,8 +93,6 @@ object RefereeScraper:
     val yellows = matchEvents.select("span.icon-yellow-card--events")
     val yellowReds = matchEvents.select("span.icon-yellow-red-card--events")
     val reds = matchEvents.select("span.icon-red-card--events")
-
-    println(fiksId)
 
     MatchStat(
       fiksId,

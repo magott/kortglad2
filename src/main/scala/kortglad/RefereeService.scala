@@ -48,4 +48,15 @@ class RefereeService(db: Db) {
       }
   }
 
+  def addSingleMatch(matchId: FiksId) = {
+    RefereeScraper.scrapeSingleMatch(matchId).map { matchDoc =>
+      val referee = RefereeScraper.extractRefereeFromSingleMatch(matchDoc)
+      val matchStats = RefereeScraper.parseMatch(matchId, matchDoc)
+      db {
+        upsertReferee(referee.fiksId, referee.name).run
+        upsertMatch(referee.fiksId, matchStats).run
+      }
+    }
+  }
+
 }
