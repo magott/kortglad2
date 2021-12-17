@@ -9,7 +9,7 @@ interface Props {
 const AccordionSeason: React.VFC<Props> = ({ season }) => {
   const [statistikk, setStatistikk] = React.useState(false)
   return (
-    <Accordion.Item eventKey="{season.season}">
+    <Accordion.Item eventKey={season.season.toString()}>
       <Accordion.Header>
         <div className="col align-self-start">
           <strong>{season.season}</strong>
