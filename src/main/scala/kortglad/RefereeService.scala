@@ -61,5 +61,4 @@ class RefereeService(db: Db) {
       }
     }
   }
-
 }

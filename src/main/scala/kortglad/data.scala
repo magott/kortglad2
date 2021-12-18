@@ -28,13 +28,13 @@ case class RefereeSeason(
 
 object RefereeStats:
   def fromMatches(matches: List[MatchStat], refereeName: String) =
-    val bySeason = matches.groupBy(_.season)
+    val bySeason = matches.groupBy(_.year)
     val seasons = bySeason
       .map((year, matchstats: List[MatchStat]) =>
         val totals = CardStat.totals(matchstats.map(_.cards))
         val averages = CardAverages.from(totals, matchstats.size)
         RefereeSeason(
-          Year.of(year),
+          year,
           averages,
           totals,
           matchstats.sortBy(_.tidspunkt)(Ordering[LocalDateTime].reverse)
@@ -58,22 +58,7 @@ case class MatchStat(
     away: String,
     cards: CardStat
 ) derives Json:
-  def inCurrentSeason = MatchStat.thisSeason(tidspunkt)
-  def season = tidspunkt.getYear
-  def year = Year.of(season)
-
-object MatchStat:
-  def seasonYear =
-    if LocalDateTime
-        .now()
-        .isBefore(LocalDateTime.now().withMonth(Month.MARCH.getValue))
-    then Year.now().minusYears(1)
-    else Year.now()
-  def seasonStart = seasonYear.atMonth(Month.MARCH).atDay(1).atStartOfDay()
-  def seasonEnd =
-    seasonYear.plusYears(1).atMonth(Month.MARCH).atDay(1).atStartOfDay()
-  def thisSeason(d: LocalDateTime) =
-    d.isBefore(seasonEnd) && d.isAfter(seasonStart)
+  def year = Year.of(tidspunkt.getYear)
 
 case class CardAverages(yellow: Double, yellowToRed: Double, red: Double)
     derives Json:
