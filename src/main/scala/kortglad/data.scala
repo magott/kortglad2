@@ -47,7 +47,9 @@ object RefereeStats:
 case class RefereeStats(
     refereeName: String,
     seasons: List[RefereeSeason]
-) derives Json
+) derives Json:
+  def totalNumberOfMatches =
+    seasons.map(_.matches.size).sum
 
 case class MatchStat(
     fiksId: FiksId,

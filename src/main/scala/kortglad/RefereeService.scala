@@ -11,7 +11,7 @@ class RefereeService(db: Db) {
 
   val logger = LoggerFactory.getLogger("RefereeService")
 
-  def updateAndGetRefereeStats(fiksId: FiksId) = {
+  def updateAndGetRefereeStats(fiksId: FiksId): Option[RefereeStats] = {
     RefereeScraper
       .matchList(fiksId)
       .map { matchList =>
@@ -21,7 +21,10 @@ class RefereeService(db: Db) {
             .unique
           val cutoff = lastSync.map(_.minusDays(3).toLocalDate)
 
-          logger.info(s"Last sync $lastSync will scrape back til $cutoff")
+          logger.info(
+            s"Last sync for ${matchList.refName} ${lastSync
+              .getOrElse("never happened")} will scrape back until ${cutoff.getOrElse("beginning of time")}"
+          )
 
           matchList.idAndKickoffs.filter(idAndKickoff =>
             cutoff.forall(_.isBefore(idAndKickoff.kickoff))
