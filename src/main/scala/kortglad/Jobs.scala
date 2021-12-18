@@ -36,8 +36,8 @@ object Jobs {
         .now()
         .atStartOfDay()
         .withDayOfYear(1)
-        .withYear(Year.now().minusYears(1).getValue)
         .atOffset(OSLO.getRules.getOffset(Instant.now()))
+      logger.info("Refresh job started")
       val workList = LazyList.continually {
         db {
           findStaleReferees(staleDate).option
