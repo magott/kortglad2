@@ -20,15 +20,15 @@ class RefereeService(db: Db) {
             .generatedKeys[Option[OffsetDateTime]]("last_sync")
             .unique
           val cutoff = lastSync.map(_.minusDays(3).toLocalDate)
-          logger.info(lastSync.toString)
-          logger.info(cutoff.toString)
-          logger.info(matchList.idAndKickoffs.mkString(","))
+
+          logger.info(s"Last sync $lastSync will scrape back til $cutoff")
+
           matchList.idAndKickoffs.filter(idAndKickoff =>
             cutoff.forall(_.isBefore(idAndKickoff.kickoff))
           )
         }
 
-        logger.info(s"Scraping ${toScrape.size}")
+        logger.info(s"Scraping total of ${toScrape.size} matches")
 
         val matchesPerSeason =
           toScrape

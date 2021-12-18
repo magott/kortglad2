@@ -9,10 +9,10 @@ interface Props {
 const AccordionSeason: React.VFC<Props> = ({ season }) => {
   const [statistikk, setStatistikk] = React.useState(false)
   return (
-    <Accordion.Item eventKey={season.season.toString()}>
+    <Accordion.Item eventKey={season.year.toString()}>
       <Accordion.Header>
         <div className="col align-self-start">
-          <strong>{season.season}</strong>
+          <strong>{season.year}</strong>
         </div>
         <div className="col align-self-center">
           <small className="text-muted">
@@ -82,7 +82,7 @@ const AccordionSeason: React.VFC<Props> = ({ season }) => {
                     Gult {match.cards.yellow}
                   </td>
                   <td>
-                    <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`}>
+                    <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`} target="_blank">
                       fotball.no
                     </a>
                   </td>

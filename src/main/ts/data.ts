@@ -13,7 +13,7 @@ export interface MatchStat {
 }
 
 export interface RefereeSeason {
-  season: number
+  year: number
   matches: MatchStat[]
   totals: CardStat
   averages: CardStat

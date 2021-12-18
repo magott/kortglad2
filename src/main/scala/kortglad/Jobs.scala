@@ -18,26 +18,30 @@ object Jobs {
     )
 
   def singleMatchScrapeJob(db: Db) =
-    val next: Option[MatchJob] = db {
-      readNextJob.option
-    }
-    logger.info(s"Matchjob triggered, will add $next")
-    next.foreach { matchJob =>
-      val count = RefereeService(db).addSingleMatch(matchJob.matchId)
-      logger.info(s"$matchJob update count $count")
+    val work = LazyList.continually {
       db {
-        markJobRead(matchJob.id).run
+        readNextMatchScrapeJob.option
       }
     }
+    for
+      matchJob <- work.takeWhile(_.isDefined)
+      job <- matchJob
+    do
+      logger.info(s"Matchjob triggered, will add $job")
+      val count = RefereeService(db).addSingleMatch(job.matchId)
+      logger.info(s"$job update count $count")
+      db {
+        markMatchScrapeJobCompleted(job.id).run
+      }
 
-  def readNextJob =
+  def readNextMatchScrapeJob =
     sql"""
         select id, match_id from match_scraper_job order by id limit 1   
     """.query[MatchJob]
 
-  def markJobRead(jobId: Int) =
+  def markMatchScrapeJobCompleted(jobId: Int) =
     sql"""
-        delete match_scraper_job where id = $jobId
+        delete from match_scraper_job where id = $jobId
      """.update
 
   case class MatchJob(id: Int, matchId: FiksId) derives Row

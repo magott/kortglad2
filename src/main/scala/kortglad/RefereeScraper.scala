@@ -52,7 +52,6 @@ object RefereeScraper:
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
   case class Referee(fiksId: FiksId, name: String)
-//  case class SingleMatch(refName: String, refFiksId: FiksId, stats: MatchStat)
 
   def parseMatchList(document: Document): MatchList =
     val body = document.body()

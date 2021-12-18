@@ -20,7 +20,7 @@ given Json[Year] = summon[Json[Int]].xmap(Year.of, _.getValue)
 given Row[Year] = Row[Int].imap(Year.of, _.getValue)
 
 case class RefereeSeason(
-    season: Year,
+    year: Year,
     averages: CardAverages,
     totals: CardStat,
     matches: List[MatchStat]
@@ -41,7 +41,7 @@ object RefereeStats:
         )
       )
       .toList
-      .sortBy(_.season)(Ordering[Year].reverse)
+      .sortBy(_.year)(Ordering[Year].reverse)
     RefereeStats(refereeName, seasons)
 
 case class RefereeStats(

@@ -95,7 +95,7 @@ const App: React.VFC = () => {
           {refereeStats.seasons && refereeStats.seasons.length > 0 && (
             <Accordion>
               {refereeStats.seasons.map((season) => (
-                <AccordionSeason season={season} key={season.season} />
+                <AccordionSeason season={season} key={season.year} />
               ))}
             </Accordion>
           )}
