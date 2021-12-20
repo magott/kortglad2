@@ -12,7 +12,7 @@ class RefereeService(db: Db) {
   val logger = LoggerFactory.getLogger("RefereeService")
 
   def updateAndGetRefereeStats(fiksId: FiksId): Option[RefereeStats] = {
-    RefereeScraper
+    Scraper
       .matchList(fiksId)
       .map { matchList =>
         val toScrape = db {
@@ -35,7 +35,7 @@ class RefereeService(db: Db) {
 
         val matchesPerSeason =
           toScrape
-            .map(x => RefereeScraper.scrapeMatch(x.fiksId))
+            .map(x => Scraper.scrapeMatch(x.fiksId))
             .groupBy(_.tidspunkt.getYear)
 
         val seasons = db {
@@ -52,9 +52,9 @@ class RefereeService(db: Db) {
   }
 
   def addSingleMatch(matchId: FiksId) = {
-    RefereeScraper.scrapeSingleMatch(matchId).map { matchDoc =>
-      val referee = RefereeScraper.extractRefereeFromSingleMatch(matchDoc)
-      val matchStats = RefereeScraper.parseMatch(matchId, matchDoc)
+    Scraper.scrapeSingleMatch(matchId).map { matchDoc =>
+      val referee = Scraper.extractRefereeFromSingleMatch(matchDoc)
+      val matchStats = Scraper.parseMatch(matchId, matchDoc)
       db {
         upsertReferee(referee.fiksId, referee.name).run
         upsertMatch(referee.fiksId, matchStats).run

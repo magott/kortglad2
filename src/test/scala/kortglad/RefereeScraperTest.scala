@@ -13,7 +13,7 @@ object RefereeScraperTest {
       File(RefereeScraperTest.getClass.getResource("/match-page.html").getFile)
 
     val doc = Jsoup.parse(file, "UTF-8")
-    val parsed = RefereeScraper.extractRefereeFromSingleMatch(doc)
+    val parsed = Scraper.extractRefereeFromSingleMatch(doc)
     println(parsed)
 
 }

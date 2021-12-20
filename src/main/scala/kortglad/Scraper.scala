@@ -11,7 +11,7 @@ import org.jsoup.nodes.{Document, Element}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-object RefereeScraper:
+object Scraper:
   val log = LoggerFactory.getLogger(getClass)
   val fotballBaseUrl = uri"https://www.fotball.no"
 
