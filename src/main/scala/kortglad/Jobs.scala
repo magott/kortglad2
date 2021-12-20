@@ -2,18 +2,9 @@ package kortglad
 import bloque.db.*
 import org.slf4j.LoggerFactory
 
-import java.time.{
-  Instant,
-  LocalDate,
-  LocalDateTime,
-  Month,
-  OffsetDateTime,
-  Year,
-  ZoneId,
-  ZoneOffset,
-  ZonedDateTime
-}
+import java.time.{Instant, LocalDate, LocalDateTime, Month, OffsetDateTime, Year, ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.concurrent.{Executors, TimeUnit}
+import scala.util.Try
 
 object Jobs {
 
@@ -48,9 +39,17 @@ object Jobs {
         fiksId <- work
       do
         logger.info(s"Refreshing stale referee data for $fiksId")
-        val updated = RefereeService(db).updateAndGetRefereeStats(fiksId)
+        val updated = Try{
+          RefereeService(db).updateAndGetRefereeStats(fiksId)
+        }.recover {
+          case e:_ => logger.error(s"Referee refresh failed for $fiksId", e)
+            db{
+              updateLastSync(fiksId).run //TODO New column for failed sync?
+            }
+            None
+        }.toOption.flatten
         logger.info(
-          s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches)} indexed"
+          s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches).getOrElse("failed")} indexed"
         )
 
     def findStaleReferees(staleDate: OffsetDateTime) =
@@ -80,8 +79,13 @@ object Jobs {
         job <- matchJob
       do
         logger.info(s"Matchjob found match, will add $job")
-        val count = RefereeService(db).addSingleMatch(job.matchId)
-        logger.info(s"$job update count ${count.getOrElse("nothing happened")}")
+        val count = Try {
+          RefereeService(db).addSingleMatch(job.matchId)
+        }.recover{
+          case e:_  => logger.error(s"Match scraper job failed for ${job.matchId}, will be marked as completed", e)
+            0
+        }
+        logger.info(s"Match scraper $job update count ${count.getOrElse("nothing happened")}")
         db {
           markMatchScrapeJobCompleted(job.id).run
         }
