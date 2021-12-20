@@ -21,6 +21,9 @@ object Scraper:
   def matchTemplate(s: FiksId) =
     fotballBaseUrl / "fotballdata" / "kamp" +? ("fiksId", s.fiksId)
 
+  def tournamentTemplate(fiksId: FiksId) =
+    fotballBaseUrl / "fotballdata" / "turnering" / "terminliste" +? ("fiksId", fiksId.fiksId)
+
   def scrapeSingleMatch(fiksId: FiksId) =
     Try {
       Jsoup.connect(matchTemplate(fiksId).toString).get()
@@ -49,6 +52,22 @@ object Scraper:
       .map(parseMatchList)
       .map(ml => (ml.refName, ml.idAndKickoffs.map(_.fiksId)))
 
+  def parseTournament(doc: Document) =
+    doc
+      .select("tbody > tr:not(.upcoming-match)")
+      .asScala
+      .filter { row =>
+        dateElementToLocalDate(row.selectFirst("td.table--mobile__date"))
+          .isBefore(LocalDate.now().plusDays(1)) &&
+        row.select("td.table--mobile__result > a").text().exists(_.isDigit)
+      }
+      .map(row =>
+        Uri
+          .fromString(row.select("td.table--mobile__result > a").attr("href"))
+          .query[FiksId]
+      )
+      .toList
+
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
   case class Referee(fiksId: FiksId, name: String)
@@ -66,9 +85,8 @@ object Scraper:
         FiksIdAndKickoff(
           Uri(java.net.URI(tr.select("td > a").get(1).attr("href")))
             .query[FiksId],
-          LocalDate.parse(
-            tr.selectFirst("td").text(),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy")
+          dateElementToLocalDate(
+            tr.selectFirst("td")
           )
         )
       )
@@ -114,3 +132,9 @@ object Scraper:
         DateTimeFormatter.ofPattern("dd.MM.yyyy")
       )
       .isBefore(LocalDate.now())
+
+  def dateElementToLocalDate(element: Element) =
+    LocalDate.parse(
+      element.text(),
+      DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    )
