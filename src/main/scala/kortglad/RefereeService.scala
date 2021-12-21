@@ -42,6 +42,8 @@ class RefereeService(db: Db) {
           for case (year, matchStats) <- matchesPerSeason do
             upsertSeason(fiksId, Year.of(year), DbMatchStats(matchStats)).run
           updateLastSync(fiksId).run
+          if (!toScrape.isEmpty)
+            activateReferee(fiksId).run
           refereeSeasonsByRefereeId(fiksId).to(List)
         }
         RefereeStats.fromMatches(

@@ -28,7 +28,7 @@ object Jobs {
         .atStartOfDay()
         .withDayOfYear(1)
         .atOffset(OSLO.getRules.getOffset(Instant.now()))
-      logger.info("Refresh job started")
+      logger.info("Refresh referee job started")
       val workList = LazyList.continually {
         db {
           findStaleReferees(staleDate).option
@@ -51,12 +51,29 @@ object Jobs {
         logger.info(
           s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches).getOrElse("failed")} indexed"
         )
-      logger.info("Refresh job ended")
+      db{
+        logger.info("Looking for inactive referees to deactivate from future refresh")
+        val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(Year.now()).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
+        logger.info(s"Found ${deactivated.size} referees that were deactivated ${deactivated.mkString("[", ",", "]")}")
+      }
+      logger.info("Refresh referee job ended")
 
     def findStaleReferees(staleDate: OffsetDateTime) =
       sql"""
-       select fiks_id from referee where last_sync is null or referee.last_sync < $staleDate order by last_sync limit 1    
+       select fiks_id from referee where active is true and (last_sync is null or referee.last_sync < $staleDate) order by last_sync limit 1
        """.query[FiksId]
+
+    def inactivateRefereesWithNoMatchesSinceYearBefore(year: Year) =
+      sql"""
+    update referee set active = false
+    where active = true
+    and referee.fiks_id in
+          (select r.fiks_id from referee r
+            left outer join referee_season rs on r.fiks_id = rs.referee_id
+            where (last_sync is not null and extract(YEAR from last_sync) >= ${year.getValue})
+            group by r.fiks_id, rs.referee_id
+            having max(year) is null or max(year) < ${year.minusYears(1).getValue})
+       """.update
   }
 
   object SingleMatchScraperJob {
@@ -143,7 +160,7 @@ object Jobs {
       .foreach{ ids =>
          logger.info(s"Tournament $work scraped ${ids.size} matches found" )
       }
-     logger.info("Tournament job ended")
+      logger.info("Tournament job ended")
 
 
 

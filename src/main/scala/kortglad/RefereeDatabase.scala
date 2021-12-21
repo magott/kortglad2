@@ -29,6 +29,9 @@ def refereeSeasonsByRefereeId(fiksId: FiksId) =
 def updateLastSync(fiksId: FiksId) =
   sql"update referee set last_sync=now() where fiks_id=$fiksId".update
 
+def activateReferee(fiksId: FiksId) =
+  sql"update referee set active = true where active = false and fiks_id=$fiksId".update
+
 def upsertReferee(fiksId: FiksId, name: String) =
   sql"""
     insert into referee (fiks_id, name) 
