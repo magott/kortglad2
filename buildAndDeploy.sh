@@ -8,11 +8,11 @@ fi
 if [[ "$1" = "kortglad" ]]
 then
   tag="prod"
-elif [[ "$1" = "stage" ]]
+elif [[ "$1" = "kortglad-stage" ]]
 then
   tag="stage"
 else
-  echo "Invalid app name ($1), must be kortglad or stage"
+  echo "Invalid app name ($1), must be kortglad or kortglad-stage"
 fi
 
 git update-index --refresh
