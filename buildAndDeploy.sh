@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+echo "Starting deploy"
 if [ "$#" -lt 1 ]
 then
   echo "Missing heroku app name"
@@ -15,8 +16,9 @@ else
   echo "Invalid app name ($1), must be kortglad or kortglad-stage"
 fi
 
+echo "Checking for uncomitted changes"
 git update-index --refresh
-git diff-index --quiet HEAD -- || echo "Uncommitted changes, aborting"; exit 1
+git diff-index --quiet HEAD -- || echo "Uncommitted changes, aborting"
 
 echo "Building"
 sbt stage
