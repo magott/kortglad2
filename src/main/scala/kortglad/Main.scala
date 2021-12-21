@@ -55,6 +55,7 @@ import java.time.OffsetDateTime
     val tx = Db.fromDataSource(ds).transactional
     val flyway = Flyway.configure().dataSource(ds).load()
     flyway.migrate()
+    Jobs.TournamentScraperJob.schedule(tx)
     Jobs.SingleMatchScraperJob.schedule(tx)
     Jobs.RefereeRefresherJob.schedule(tx)
     val port = Properties.envOrElse("PORT", "8080").toInt

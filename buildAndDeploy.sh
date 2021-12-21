@@ -19,7 +19,7 @@ git update-index --refresh
 git diff-index --quiet HEAD -- || echo "Uncommitted changes, aborting"; exit 1
 
 echo "Building"
-#sbt stage
+sbt stage
 echo "Pushing container to heroku"
 heroku container:push web --app $1
 echo "Releasing"

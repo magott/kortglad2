@@ -52,6 +52,9 @@ object Scraper:
       .map(parseMatchList)
       .map(ml => (ml.refName, ml.idAndKickoffs.map(_.fiksId)))
 
+  def readTournament(fiksId: FiksId) =
+    Jsoup.connect(tournamentTemplate(fiksId).toString).get()
+
   def parseTournament(doc: Document) =
     doc
       .select("tbody > tr:not(.upcoming-match)")

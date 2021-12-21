@@ -15,7 +15,7 @@ object Jobs {
     val OSLO = ZoneId.of("Europe/Oslo")
 
     def schedule(db: Db) =
-      executor.scheduleAtFixedRate(
+      executor.scheduleWithFixedDelay(
         () => refereeRefresherJob(db),
         0,
         30,
@@ -51,6 +51,7 @@ object Jobs {
         logger.info(
           s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches).getOrElse("failed")} indexed"
         )
+      logger.info("Refresh job ended")
 
     def findStaleReferees(staleDate: OffsetDateTime) =
       sql"""
@@ -61,7 +62,7 @@ object Jobs {
   object SingleMatchScraperJob {
 
     def schedule(db: Db) =
-      executor.scheduleAtFixedRate(
+      executor.scheduleWithFixedDelay(
         () => singleMatchScrapeJob(db),
         1,
         120,
@@ -69,6 +70,7 @@ object Jobs {
       )
 
     def singleMatchScrapeJob(db: Db) =
+      logger.info("Match scraper job starteed")
       val work = LazyList.continually {
         db {
           readNextMatchScrapeJob.option
@@ -89,6 +91,7 @@ object Jobs {
         db {
           markMatchScrapeJobCompleted(job.id).run
         }
+      logger.info("Match scraper job ended")
 
     def readNextMatchScrapeJob =
       sql"""
@@ -101,5 +104,62 @@ object Jobs {
      """.update
 
     case class MatchJob(id: Int, matchId: FiksId) derives Row
+  }
+
+  object TournamentScraperJob{
+
+    def schedule(db: Db) =
+      executor.scheduleWithFixedDelay(() => tournamentScraperJob(db), 0, 1, TimeUnit.DAYS)
+
+    def tournamentScraperJob(db: Db) =
+      logger.info("Tournament scraper job started")
+      val workList = LazyList.continually{
+        db {
+          readNextTournamentScraperJob.option
+        }
+      }
+      for
+        tournamentJob <- workList.takeWhile(_.isDefined)
+        work <- tournamentJob
+      do
+       Try {
+          val doc = Scraper.readTournament(work)
+          val matchIds = Scraper.parseTournament(doc)
+          for
+            matchId <- matchIds
+          do
+            db{
+              addMatchForScraping(matchId).run
+              markTournamentScrapeJobCompleted(work).run
+            }
+          matchIds
+      }.recover{ err =>
+         logger.info(s"Tournament $work scraping failed, marking as complete ",err)
+         db {
+           markTournamentScrapeJobCompleted(work).run
+         }
+         List.empty
+     }
+      .foreach{ ids =>
+         logger.info(s"Tournament $work scraped ${ids.size} matches found" )
+      }
+
+
+
+
+    def readNextTournamentScraperJob =
+      sql"""
+        select tournament_id from tournament_scraper_job order by id limit 1
+       """.query[FiksId]
+
+    def markTournamentScrapeJobCompleted(fiksId: FiksId) =
+      sql"""
+        delete from tournament_scraper_job where tournament_id = ${fiksId.fiksId}
+     """.update
+
+    def addMatchForScraping(matchId: FiksId) =
+      sql"""
+        insert into match_scraper_job(match_id) values(${matchId.fiksId})
+     """.update
   }
 }
