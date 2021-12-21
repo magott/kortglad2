@@ -70,7 +70,7 @@ object Jobs {
       )
 
     def singleMatchScrapeJob(db: Db) =
-      logger.info("Match scraper job starteed")
+      logger.info("Match scraper job started")
       val work = LazyList.continually {
         db {
           readNextMatchScrapeJob.option
@@ -143,6 +143,7 @@ object Jobs {
       .foreach{ ids =>
          logger.info(s"Tournament $work scraped ${ids.size} matches found" )
       }
+     logger.info("Tournament job ended")
 
 
 
