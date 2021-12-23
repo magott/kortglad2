@@ -14,8 +14,11 @@ class ScraperTest extends munit.FunSuite {
 
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.extractRefereeFromSingleMatch(doc)
-    assertEquals(parsed.name, "Morten Andersen-Gott")
-    assertEquals(parsed.fiksId, FiksId(2245443))
+    assert(parsed.isDefined)
+    parsed.foreach(ref =>
+      assertEquals(ref.name, "Morten Andersen-Gott")
+      assertEquals(ref.fiksId, FiksId(2245443))
+    )
   }
 
   test("can extract fiks ids from tournament page") {
@@ -24,6 +27,15 @@ class ScraperTest extends munit.FunSuite {
     val parsed = Scraper.parseTournament(doc)
     assert(parsed.nonEmpty)
     assertEquals(parsed.size, 20)
+  }
+
+  test("handles hidden referee gracefully") {
+
+    val file = ScraperTest.getFile("/match-page-hidden-ref.html")
+
+    val doc = Jsoup.parse(file, "UTF-8")
+    val parsed = Scraper.extractRefereeFromSingleMatch(doc)
+    assert(parsed.isEmpty, "Hidden referee should return None")
   }
 
 }

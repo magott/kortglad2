@@ -32,8 +32,10 @@ object Scraper:
   def extractRefereeFromSingleMatch(kampDoc: Document) =
     val dommerLink =
       kampDoc.select("div > p > span:contains(Dommer:) + strong > a")
-    val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
-    Referee(fiksId, dommerLink.text())
+    if (dommerLink.isEmpty) None
+    else
+      val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
+      Some(Referee(fiksId, dommerLink.text()))
 
   def scrapeMatch(fiksId: FiksId): MatchStat =
     val doc = Jsoup.connect(matchTemplate(fiksId).toString).get()

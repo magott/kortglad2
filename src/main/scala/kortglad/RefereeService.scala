@@ -54,13 +54,14 @@ class RefereeService(db: Db) {
   }
 
   def addSingleMatch(matchId: FiksId) = {
-    Scraper.scrapeSingleMatch(matchId).map { matchDoc =>
-      val referee = Scraper.extractRefereeFromSingleMatch(matchDoc)
-      val matchStats = Scraper.parseMatch(matchId, matchDoc)
+    for
+      matchDoc <- Scraper.scrapeSingleMatch(matchId)
+      referee <- Scraper.extractRefereeFromSingleMatch(matchDoc)
+      matchStats = Scraper.parseMatch(matchId, matchDoc)
+    do
       db {
         upsertReferee(referee.fiksId, referee.name).run
         upsertMatch(referee.fiksId, matchStats).run
       }
-    }
   }
 }
