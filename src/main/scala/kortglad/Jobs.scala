@@ -22,12 +22,9 @@ object Jobs {
         TimeUnit.DAYS
       )
 
+    def staleDate = OffsetDateTime.now(OSLO).withDayOfYear(1).`with`(java.time.LocalTime.MIN)
+
     def refereeRefresherJob(db: Db) =
-      val staleDate = LocalDate
-        .now()
-        .atStartOfDay()
-        .withDayOfYear(1)
-        .atOffset(OSLO.getRules.getOffset(Instant.now()))
       logger.info("Refresh referee job started")
       val workList = LazyList.continually {
         db {
@@ -74,6 +71,7 @@ object Jobs {
             group by r.fiks_id, rs.referee_id
             having max(year) is null or max(year) < ${year.minusYears(1).getValue})
        """.update
+
   }
 
   object SingleMatchScraperJob {

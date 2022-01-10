@@ -58,10 +58,9 @@ class RefereeService(db: Db) {
       matchDoc <- Scraper.scrapeSingleMatch(matchId)
       referee <- Scraper.extractRefereeFromSingleMatch(matchDoc)
       matchStats = Scraper.parseMatch(matchId, matchDoc)
-    do
-      db {
-        upsertReferee(referee.fiksId, referee.name).run
-        upsertMatch(referee.fiksId, matchStats).run
-      }
+    yield db {
+      upsertReferee(referee.fiksId, referee.name).run
+      upsertMatch(referee.fiksId, matchStats).run
+    }
   }
 }
