@@ -19,15 +19,15 @@ class RefereeService(db: Db) {
           val lastSync = upsertReferee(fiksId, matchList.refName)
             .generatedKeys[Option[OffsetDateTime]]("last_sync")
             .unique
-          val cutoff = lastSync.map(_.minusDays(3).toLocalDate)
+          val syncMatchesAfter = lastSync.map(_.minusDays(3).toLocalDate)
 
           logger.info(
             s"Last sync for ${matchList.refName} ${lastSync
-              .getOrElse("never happened")} will scrape back until ${cutoff.getOrElse("beginning of time")}"
+              .getOrElse("never happened")} will scrape back until ${syncMatchesAfter.getOrElse("beginning of time")}"
           )
 
           matchList.idAndKickoffs.filter(idAndKickoff =>
-            cutoff.forall(_.isBefore(idAndKickoff.kickoff))
+            syncMatchesAfter.forall(_.isBefore(idAndKickoff.kickoff))
           )
         }
 
