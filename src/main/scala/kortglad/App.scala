@@ -2,11 +2,14 @@ package kortglad
 
 import bloque.db.*
 import bloque.http.*, Server.*
+import org.slf4j.LoggerFactory
 
 object App:
+  val logger = LoggerFactory.getLogger("Endpoints")
   def run(db: Db): Request ?=> Response =
     request match {
       case GET -> path"/referee/${FiksId(fiksId)}" =>
+        logger.info(s"GET referee/$fiksId")
         try {
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
             case Some(rStats) => Ok(rStats.json)
