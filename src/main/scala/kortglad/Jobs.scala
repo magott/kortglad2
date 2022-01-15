@@ -80,8 +80,8 @@ object Jobs {
       executor.scheduleWithFixedDelay(
         () => singleMatchScrapeJob(db),
         1,
-        120,
-        TimeUnit.SECONDS
+        60,
+        TimeUnit.MINUTES
       )
 
     def singleMatchScrapeJob(db: Db) =
