@@ -96,7 +96,9 @@ object Scraper:
         )
       )
       .toList
-    log.info(fiksIdAndKickoff.mkString)
+    log.info(
+      s"Matchlist for $refName ${fiksIdAndKickoff.map(f => f.fiksId.fiksId -> f.kickoff).mkString}"
+    )
     MatchList(refName, fiksIdAndKickoff)
 
   def parseMatch(fiksId: FiksId, kampDoc: Document) =
