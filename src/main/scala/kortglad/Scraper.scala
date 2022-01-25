@@ -42,7 +42,9 @@ object Scraper:
     parseMatch(fiksId, doc)
 
   def matchList(fiksId: FiksId) = Try {
+    log.info(s"Getting matchlist for $fiksId")
     val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
+    log.info(s"Got matchlist for $fiksId, start parsing")
     parseMatchList(doc)
   }.toOption
 
