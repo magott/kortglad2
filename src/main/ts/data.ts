@@ -23,3 +23,8 @@ export interface RefereeStats {
   refereeName: string
   seasons: RefereeSeason[]
 }
+
+export interface IndexedReferee{
+  fiksId: number
+  name: string
+}

@@ -22,6 +22,14 @@ object App:
             e.printStackTrace()
             InternalServerError()
         }
+      case GET -> path"/search/referee" =>
+        val q = request.query[Search]
+        val json = List(
+          IndexedReferee(FiksId(2245443), "Morten Andersen-Gott"),
+          IndexedReferee(FiksId(3715313), "Marius Wikestad Pedersen")
+        )
+        val refs = RefereeService(db).searchReferee(q)
+        Ok(refs.json)
 
       case _ => request.delegate
     }

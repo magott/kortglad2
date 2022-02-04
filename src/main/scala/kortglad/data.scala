@@ -13,6 +13,10 @@ object FiksId:
 
 case class FiksId(fiksId: Int) derives Params, Row
 
+case class Search(q: String) derives Params
+
+case class IndexedReferee(fiksId: FiksId, name: String) derives Json, Row
+
 given Json[LocalDateTime] =
   summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
 

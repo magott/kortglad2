@@ -40,6 +40,19 @@ def upsertReferee(fiksId: FiksId, name: String) =
     name=excluded.name
   """.update
 
+def searchReferees(search: String) =
+  val term = search
+    .trim()
+    .filterNot(_ == ':')
+    .split("\\s+")
+    .map(_ + ":*")
+    .mkString(" & ")
+  println(term)
+  sql"""
+    select fiks_id, name from referee
+    where to_tsquery('simple', $term) @@ name_tsv
+     """.query[IndexedReferee]
+
 def upsertMatch(refereeId: FiksId, matchStat: MatchStat) =
   upsertSeason(refereeId, matchStat.year, DbMatchStats(List(matchStat)))
 

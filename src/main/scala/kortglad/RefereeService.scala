@@ -63,4 +63,10 @@ class RefereeService(db: Db) {
       upsertMatch(referee.fiksId, matchStats).run
     }
   }
+
+  def searchReferee(search: Search) = {
+    db {
+      searchReferees(search.q).to(List)
+    }
+  }
 }

@@ -1,15 +1,48 @@
-import React from 'react'
+import React, {useCallback, useState} from 'react'
 import { Button, Col, Container, Form, Row, Spinner, Accordion, Alert } from 'react-bootstrap'
 import AccordionSeason from './AccordionSeason'
-import { RefereeStats } from './data'
+import {IndexedReferee, RefereeStats} from './data'
+import {AsyncTypeahead, Typeahead} from 'react-bootstrap-typeahead'
+
 
 const App: React.VFC = () => {
   const [fetching, setFetching] = React.useState(false)
+  const [state, setState] = React.useState<{loading:boolean, items:IndexedReferee[]}>({loading:false, items:[]})
+
   const [dommer, setDommer] = React.useState(
     () => new URLSearchParams(new URL(window.location.href).search).get('fiksId') || ''
   )
   const [refereeStats, setRefereeStats] = React.useState<RefereeStats>()
   const [errorMessage, setErrorMessage] = React.useState<String>()
+
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const onKeyDown = useCallback(
+      (e) => {
+        // Check whether the 'enter' key was pressed, and also make sure that
+        // no menu items are highlighted.
+        console.log("Key pressed", e)
+        if (e.keyCode === 13 && activeIndex === -1) {
+          console.log("Enter!!")
+          if(fiksId != null && fiksId != ""){
+            hentStatistikk()
+          }
+        }
+      },
+      [activeIndex, dommer]
+  );
+
+  function getFiksIdFromUrl(candidate:string){
+    console.log("Getting fiksid from url "+candidate)
+    try {
+      const url = new URL(candidate)
+      const search = new URLSearchParams(url.search)
+      const fiks = search.get('fiksId')
+      return fiks
+    } catch (error) {
+      return null
+    }
+  }
 
   const fiksId = React.useMemo(() => {
     if (dommer) {
@@ -17,14 +50,7 @@ const App: React.VFC = () => {
       if (parsed) {
         return parsed
       } else {
-        try {
-          const url = new URL(dommer)
-          const search = new URLSearchParams(url.search)
-          const fiks = search.get('fiksId')
-          return fiks
-        } catch (error) {
-          return null
-        }
+        return getFiksIdFromUrl(dommer)
       }
     } else {
       return null
@@ -32,6 +58,7 @@ const App: React.VFC = () => {
   }, [dommer])
 
   const hentStatistikk = async () => {
+    console.log("Henter statistikk for "+fiksId)
     if (fiksId !== null) {
       history.pushState({}, '', `?fiksId=${fiksId}`)
       try {
@@ -62,13 +89,47 @@ const App: React.VFC = () => {
       <p>
         <Form>
           <Row>
+            <Col>
+            </Col>
+          </Row>
+          <Row>
             <Col xs={7}>
-              <Form.Control
-                type="input"
-                value={dommer}
-                onChange={(e) => setDommer(e.target.value)}
-                placeholder="https://www.fotball.no/fotballdata/person/dommeroppdrag/?fiksId=xxxx"
-              />
+              <AsyncTypeahead
+                  placeholder="Søk etter dommer eller lim inn adresse til dommerdagbok fra fotball.no"
+                  isLoading={state.loading}
+                  labelKey={(option) => option.name}
+                  onSearch={(query) => {
+                    setState({...state, loading: true});
+                    fetch(`search/referee?q=${query}`)
+                        .then(resp => resp.json())
+                        .then(items => setState({
+                          loading: false,
+                          items,
+                        }));
+                  }}
+                  options={state.items}
+                  onChange={(selected) => {
+                    if(selected.length == 1) {
+                      console.log(selected[0].fiksId)
+                      setDommer(selected[0].fiksId.toString())
+                    }else{
+                      console.log("Ikke dommer" +selected)
+                      setDommer('')
+                    }
+                  }}
+                  onInputChange={(input, e: Event) => {
+                    const fiksIdFromUrl = getFiksIdFromUrl(input)
+                    if (fiksIdFromUrl != null) {
+                      console.log("Setter dommer med fiksId "+fiksIdFromUrl)
+                      setDommer(fiksIdFromUrl)
+                    } else {
+                      console.log("Ikke dommerurl" + input)
+                    }
+                  }
+                  }
+              >
+
+              </AsyncTypeahead>
             </Col>
             <Col xs={3}>
               <Button variant="primary" onClick={() => hentStatistikk()} disabled={fiksId == null}>
