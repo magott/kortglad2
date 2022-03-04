@@ -64,27 +64,27 @@ const AccordionSeason: React.VFC<Props> = ({ season }) => {
             <thead>
               <tr>
                 <th>Dato</th>
+                <th>Turnering</th>
                 <th>Kamp</th>
                 <th>Statistikk</th>
-                <th>Link</th>
               </tr>
             </thead>
             <tbody>
               {season.matches.map((match) => (
                 <tr>
                   <td>{match.tidspunkt.replace('T', ' ')}</td>
-                  <td>{match.home} - {match.away}</td>
+                  <td>{match.tournament}</td>
+                  <td>
+                    <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`} target="_blank">
+                    {match.home} - {match.away}
+                    </a>
+                  </td>
                   <td className="small">
                     Røde {match.cards.red}
                     <br />
                     Gult nr 2 {match.cards.yellowToRed}
                     <br />
                     Gult {match.cards.yellow}
-                  </td>
-                  <td>
-                    <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`} target="_blank">
-                      fotball.no
-                    </a>
                   </td>
                 </tr>
               ))}

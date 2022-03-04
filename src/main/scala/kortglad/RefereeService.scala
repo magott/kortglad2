@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.time.Year
 import java.time.LocalDate
 
-class RefereeService(db: Db) {
+class RefereeService(db: Sessions) {
 
   val logger = LoggerFactory.getLogger("RefereeService")
 
@@ -15,7 +15,7 @@ class RefereeService(db: Db) {
     Scraper
       .matchList(fiksId)
       .map { matchList =>
-        val toScrape = db {
+        val toScrape = db.tx {
           val lastSync = upsertReferee(fiksId, matchList.refName)
             .generatedKeys[Option[OffsetDateTime]]("last_sync")
             .unique
@@ -38,12 +38,12 @@ class RefereeService(db: Db) {
             .map(x => Scraper.scrapeMatch(x.fiksId))
             .groupBy(_.tidspunkt.getYear)
 
-        val seasons = db {
+        val seasons = db.tx {
           for case (year, matchStats) <- matchesPerSeason do
-            upsertSeason(fiksId, Year.of(year), DbMatchStats(matchStats)).run
-          updateLastSync(fiksId).run
+            upsertSeason(fiksId, Year.of(year), DbMatchStats(matchStats)).update
+          updateLastSync(fiksId).update
           if (!toScrape.isEmpty)
-            activateReferee(fiksId).run
+            activateReferee(fiksId).update
           refereeSeasonsByRefereeId(fiksId).to(List)
         }
         RefereeStats.fromMatches(
@@ -58,14 +58,14 @@ class RefereeService(db: Db) {
       matchDoc <- Scraper.scrapeSingleMatch(matchId)
       referee <- Scraper.extractRefereeFromSingleMatch(matchDoc)
       matchStats = Scraper.parseMatch(matchId, matchDoc)
-    yield db {
-      upsertReferee(referee.fiksId, referee.name).run
-      upsertMatch(referee.fiksId, matchStats).run
+    yield db.tx {
+      upsertReferee(referee.fiksId, referee.name).update
+      upsertMatch(referee.fiksId, matchStats).update
     }
   }
 
   def searchReferee(search: Search) = {
-    db {
+    db.tx {
       searchReferees(search.q).to(List)
     }
   }

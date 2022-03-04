@@ -14,7 +14,7 @@ object Jobs {
   object RefereeRefresherJob {
     val OSLO = ZoneId.of("Europe/Oslo")
 
-    def schedule(db: Db) =
+    def schedule(db: Sessions) =
       executor.scheduleWithFixedDelay(
         () => refereeRefresherJob(db),
         0,
@@ -24,10 +24,10 @@ object Jobs {
 
     def staleDate = OffsetDateTime.now(OSLO).withDayOfYear(1).`with`(java.time.LocalTime.MIN)
 
-    def refereeRefresherJob(db: Db) =
+    def refereeRefresherJob(db: Sessions) =
       logger.info("Refresh referee job started")
       val workList = LazyList.continually {
-        db {
+        db.tx {
           findStaleReferees(staleDate).option
         }
       }
@@ -40,15 +40,15 @@ object Jobs {
           RefereeService(db).updateAndGetRefereeStats(fiksId)
         }.recover {
           case e:_ => logger.error(s"Referee refresh failed for $fiksId", e)
-            db{
-              updateLastSync(fiksId).run //TODO New column for failed sync?
+            db.tx{
+              updateLastSync(fiksId).update //TODO New column for failed sync?
             }
             None
         }.toOption.flatten
         logger.info(
           s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches).getOrElse("failed")} indexed"
         )
-      db{
+      db.tx{
         logger.info("Looking for inactive referees to deactivate from future refresh")
         val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(Year.now()).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
         logger.info(s"Found ${deactivated.size} referees that were deactivated ${deactivated.mkString("[", ",", "]")}")
@@ -70,13 +70,13 @@ object Jobs {
             where (last_sync is not null and extract(YEAR from last_sync) >= ${year.getValue})
             group by r.fiks_id, rs.referee_id
             having max(year) is null or max(year) < ${year.minusYears(1).getValue})
-       """.update
+       """
 
   }
 
   object SingleMatchScraperJob {
 
-    def schedule(db: Db) =
+    def schedule(db: Sessions) =
       executor.scheduleWithFixedDelay(
         () => singleMatchScrapeJob(db),
         1,
@@ -84,10 +84,10 @@ object Jobs {
         TimeUnit.MINUTES
       )
 
-    def singleMatchScrapeJob(db: Db) =
+    def singleMatchScrapeJob(db: Sessions) =
       logger.info("Match scraper job started")
       val work = LazyList.continually {
-        db {
+        db.tx {
           readNextMatchScrapeJob.option
         }
       }
@@ -103,8 +103,8 @@ object Jobs {
             0
         }
         logger.info(s"Match scraper $job update count ${count.getOrElse("nothing happened")}")
-        db {
-          markMatchScrapeJobCompleted(job.id).run
+        db.tx {
+          markMatchScrapeJobCompleted(job.id).update
         }
       logger.info("Match scraper job ended")
 
@@ -116,20 +116,20 @@ object Jobs {
     def markMatchScrapeJobCompleted(jobId: Int) =
       sql"""
         delete from match_scraper_job where id = $jobId
-     """.update
+     """
 
-    case class MatchJob(id: Int, matchId: FiksId) derives Row
+    case class MatchJob(id: Int, matchId: FiksId) derives Db
   }
 
   object TournamentScraperJob{
 
-    def schedule(db: Db) =
+    def schedule(db: Sessions) =
       executor.scheduleWithFixedDelay(() => tournamentScraperJob(db), 0, 1, TimeUnit.DAYS)
 
-    def tournamentScraperJob(db: Db) =
+    def tournamentScraperJob(db: Sessions) =
       logger.info("Tournament scraper job started")
       val workList = LazyList.continually{
-        db {
+        db.tx {
           readNextTournamentScraperJob.option
         }
       }
@@ -143,15 +143,15 @@ object Jobs {
           for
             matchId <- matchIds
           do
-            db{
-              addMatchForScraping(matchId).run
-              markTournamentScrapeJobCompleted(work).run
+            db.tx{
+              addMatchForScraping(matchId).update
+              markTournamentScrapeJobCompleted(work).update
             }
           matchIds
       }.recover{ err =>
          logger.info(s"Tournament $work scraping failed, marking as complete ",err)
-         db {
-           markTournamentScrapeJobCompleted(work).run
+         db.tx {
+           markTournamentScrapeJobCompleted(work).update
          }
          List.empty
      }
@@ -171,11 +171,11 @@ object Jobs {
     def markTournamentScrapeJobCompleted(fiksId: FiksId) =
       sql"""
         delete from tournament_scraper_job where tournament_id = ${fiksId.fiksId}
-     """.update
+     """
 
     def addMatchForScraping(matchId: FiksId) =
       sql"""
         insert into match_scraper_job(match_id) values(${matchId.fiksId})
-     """.update
+     """
   }
 }

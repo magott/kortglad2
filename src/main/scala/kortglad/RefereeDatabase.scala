@@ -1,21 +1,21 @@
 package kortglad
 
-import bloque.db.Row
 import bloque.db.*
-
+import bloque.pg.Pg
 import java.time.{OffsetDateTime, Year}
 
 case class DbReferee(
     fiksId: FiksId,
     name: String,
     lastSync: Option[OffsetDateTime]
-) derives Row
+) derives Db
 
-case class DbSeason(year: Year, matchStats: DbMatchStats) derives Row
+case class DbSeason(year: Year, matchStats: DbMatchStats) derives Db
 
-case class DbMatchStats(matchStats: List[MatchStat]) derives Row
+case class DbMatchStats(matchStats: List[MatchStat]) derives Db
 object DbMatchStats:
-  given Row[List[MatchStat]] = jsonb[Map[String, MatchStat]]
+  given Db[List[MatchStat]] = Pg
+    .jsonb[Map[String, MatchStat]]
     .imap(_.values.toList, _.map(v => (v.fiksId.fiksId.toString -> v)).toMap)
 
 def refereeById(fiksId: FiksId) =
@@ -27,10 +27,10 @@ def refereeSeasonsByRefereeId(fiksId: FiksId) =
     .query[DbSeason]
 
 def updateLastSync(fiksId: FiksId) =
-  sql"update referee set last_sync=now() where fiks_id=$fiksId".update
+  sql"update referee set last_sync=now() where fiks_id=$fiksId"
 
 def activateReferee(fiksId: FiksId) =
-  sql"update referee set active = true where active = false and fiks_id=$fiksId".update
+  sql"update referee set active = true where active = false and fiks_id=$fiksId"
 
 def upsertReferee(fiksId: FiksId, name: String) =
   sql"""
@@ -38,7 +38,7 @@ def upsertReferee(fiksId: FiksId, name: String) =
     values($fiksId, $name) 
     on conflict (fiks_id) do update set 
     name=excluded.name
-  """.update
+  """
 
 def searchReferees(search: String) =
   val term = search
@@ -62,4 +62,4 @@ def upsertSeason(refereeId: FiksId, year: Year, matchStats: DbMatchStats) =
        values($refereeId, $year, $matchStats)
        on conflict (referee_id, year) do update set
        matches = referee_season.matches || excluded.matches
-       """.update
+       """

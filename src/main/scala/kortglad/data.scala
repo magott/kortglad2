@@ -5,23 +5,24 @@ import java.text.DecimalFormat
 import java.time.{LocalDate, LocalDateTime, Month, Year}
 import bloque.http.*
 import bloque.db.*
+import bloque.json.Json
 
 object FiksId:
-  given Json[FiksId] = summon[Json[Int]].xmap(apply, _.fiksId)
-  given fvar: Var[FiksId] = summon[Var[Int]].xmap(apply, _.fiksId)
+  given Json[FiksId] = summon[Json[Int]].imap(apply, _.fiksId)
+  given fvar: Val[FiksId] = summon[Val[Int]].xmap(apply, _.fiksId, "fiksId")
   export fvar.unapply
 
-case class FiksId(fiksId: Int) derives Params, Row
+case class FiksId(fiksId: Int) derives Params, Db
 
 case class Search(q: String) derives Params
 
-case class IndexedReferee(fiksId: FiksId, name: String) derives Json, Row
+case class IndexedReferee(fiksId: FiksId, name: String) derives Json, Db
 
 given Json[LocalDateTime] =
-  summon[Json[String]].xmap(LocalDateTime.parse, _.toString)
+  summon[Json[String]].imap(LocalDateTime.parse, _.toString)
 
-given Json[Year] = summon[Json[Int]].xmap(Year.of, _.getValue)
-given Row[Year] = Row[Int].imap(Year.of, _.getValue)
+given Json[Year] = summon[Json[Int]].imap(Year.of, _.getValue)
+given Db[Year] = Db[Int].imap(Year.of, _.getValue)
 
 case class RefereeSeason(
     year: Year,
@@ -58,7 +59,7 @@ case class RefereeStats(
 case class MatchStat(
     fiksId: FiksId,
     tidspunkt: LocalDateTime,
-//    tournament: Option[String],
+    tournament: Option[String],
     home: String,
     away: String,
     cards: CardStat

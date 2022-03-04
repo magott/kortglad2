@@ -1,40 +1,37 @@
 package kortglad
 
-import bloque.db.Db
-import bloque.db.transactional
+import bloque.db.*
+import bloque.pg.Pg
 import bloque.jetty.*
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.flywaydb.core.Flyway
-import bloque.db.Row
-import bloque.http.Json
 
 import java.sql.Types
 import java.sql.ResultSet
-import org.postgresql.util.PGobject
 
 import java.time.OffsetDateTime
 import scala.util.Properties
 
-given Row[PGobject] = Row
-  .jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
-  .imap(_.asInstanceOf[PGobject], identity)
+//given Row[PGobject] = Row
+//  .jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
+//  .imap(_.asInstanceOf[PGobject], identity)
 
-given Row[OffsetDateTime] = Row
-  .jdbc(
-    Types.TIMESTAMP_WITH_TIMEZONE,
-    Nil,
-    _.getObject(_, classOf[OffsetDateTime]),
-    _.setObject(_, _)
-  )
+//given Row[OffsetDateTime] = Row
+//  .jdbc(
+//    Types.TIMESTAMP_WITH_TIMEZONE,
+//    Nil,
+//    _.getObject(_, classOf[OffsetDateTime]),
+//    _.setObject(_, _)
+//  )
 
-def jsonb[A](using j: Json[A]): Row[A] =
-  def read(pg: PGobject) = Json.read(pg.getValue, false)
-  def write(a: A) =
-    val pg = new PGobject
-    pg.setType("jsonb")
-    pg.setValue(Json.default.write(a))
-    pg
-  Row[PGobject].imap(read, write)
+//def jsonb[A](using j: Json[A]): Row[A] =
+//  def read(pg: PGobject) = Json.read(pg.getValue, false)
+//  def write(a: A) =
+//    val pg = new PGobject
+//    pg.setType("jsonb")
+//    pg.setValue(Json.default.write(a))
+//    pg
+//  Row[PGobject].imap(read, write)
 
 import scala.util.Using
 import java.time.OffsetDateTime
@@ -52,7 +49,7 @@ import java.time.OffsetDateTime
     }
 
   Using.resource(HikariDataSource(hikariConfig)) { ds =>
-    val tx = Db.fromDataSource(ds).transactional
+    val tx = Sessions.fromDataSource(ds)
     val flyway = Flyway.configure().dataSource(ds).load()
     flyway.migrate()
     Jobs.TournamentScraperJob.schedule(tx)

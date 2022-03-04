@@ -33,8 +33,8 @@ class ScraperTest extends munit.FunSuite {
     val file = ScraperTest.getFile("/match-page.html")
     val doc = Jsoup.parse(file, "UTF-8")
     val matchStat = Scraper.parseMatch(FiksId(1234), doc)
-//    println(matchStat.tournament)
-//    assert(matchStat.tournament.isDefined)
+    println(matchStat.tournament)
+    assert(matchStat.tournament.isDefined)
   }
 
   test("handles hidden referee gracefully") {

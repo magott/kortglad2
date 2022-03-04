@@ -90,7 +90,8 @@ object Scraper:
     val fiksIdAndKickoff = dommerRader
       .map(tr =>
         FiksIdAndKickoff(
-          Uri(java.net.URI(tr.select("td > a").get(1).attr("href")))
+          Uri
+            .fromString(tr.select("td > a").get(1).attr("href"))
             .query[FiksId],
           dateElementToLocalDate(
             tr.selectFirst("td")
@@ -125,7 +126,7 @@ object Scraper:
     MatchStat(
       matchId,
       tidspunkt,
-//      Option.unless(tournament.isBlank) { tournament },
+      Option.unless(tournament.isBlank) { tournament },
       home,
       away,
       CardStat(yellows.size(), yellowReds.size(), reds.size())

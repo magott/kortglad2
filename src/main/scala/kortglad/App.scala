@@ -2,20 +2,21 @@ package kortglad
 
 import bloque.db.*
 import bloque.http.*, Server.*
+import bloque.json.Json
 import org.slf4j.LoggerFactory
 
 object App:
   val logger = LoggerFactory.getLogger("Endpoints")
-  def run(db: Db): Request ?=> Response =
+  def run(db: Sessions): Request ?=> Response =
     request match {
       case GET -> path"/referee/${FiksId(fiksId)}" =>
         logger.info(s"GET referee/$fiksId")
         try {
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
-            case Some(rStats) => Ok(rStats.json)
+            case Some(rStats) => Ok(Json(rStats))
             case None =>
               NotFound(
-                Error(s"Fant ikke dommer med fiks id ${fiksId.fiksId}").json
+                Json(Error(s"Fant ikke dommer med fiks id ${fiksId.fiksId}"))
               )
         } catch {
           case e =>
@@ -29,7 +30,7 @@ object App:
           IndexedReferee(FiksId(3715313), "Marius Wikestad Pedersen")
         )
         val refs = RefereeService(db).searchReferee(q)
-        Ok(refs.json)
+        Ok(Json(refs))
 
       case _ => request.delegate
     }
