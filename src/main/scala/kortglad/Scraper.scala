@@ -37,9 +37,9 @@ object Scraper:
       val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
       Some(Referee(fiksId, dommerLink.text()))
 
-  def scrapeMatch(fiksId: FiksId): MatchStat =
-    val doc = Jsoup.connect(matchTemplate(fiksId).toString).get()
-    parseMatch(fiksId, doc)
+  def scrapeMatch(matchId: FiksId): MatchStat =
+    val doc = Jsoup.connect(matchTemplate(matchId).toString).get()
+    parseMatch(matchId, doc)
 
   def matchList(fiksId: FiksId) = Try {
     log.info(s"Getting matchlist for $fiksId")
@@ -103,11 +103,13 @@ object Scraper:
     )
     MatchList(refName, fiksIdAndKickoff)
 
-  def parseMatch(fiksId: FiksId, kampDoc: Document) =
+  def parseMatch(matchId: FiksId, kampDoc: Document) =
     val lag = kampDoc
       .select("span.match__teamname-img")
       .asScala
       .map(_.nextElementSibling().text())
+    val tournament =
+      kampDoc.select("div > p:contains(Turnering:) > a").text()
     val home = lag.head
     val away = lag.drop(1).head
     val dateText = kampDoc.select("span.match__arenainfo-date").text()
@@ -121,8 +123,9 @@ object Scraper:
     val reds = matchEvents.select("span.icon-red-card--events")
 
     MatchStat(
-      fiksId,
+      matchId,
       tidspunkt,
+//      Option.unless(tournament.isBlank) { tournament },
       home,
       away,
       CardStat(yellows.size(), yellowReds.size(), reds.size())

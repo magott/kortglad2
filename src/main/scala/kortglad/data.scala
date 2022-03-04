@@ -58,6 +58,7 @@ case class RefereeStats(
 case class MatchStat(
     fiksId: FiksId,
     tidspunkt: LocalDateTime,
+//    tournament: Option[String],
     home: String,
     away: String,
     cards: CardStat

@@ -6,7 +6,8 @@ export interface CardStat {
 
 export interface MatchStat {
   fiksId: string
-  tidspunkt: string
+  tidspunkt: string,
+  tournament?: string,
   home: string
   away: string
   cards: CardStat
