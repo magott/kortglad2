@@ -1,6 +1,7 @@
 import React from 'react'
 import { Accordion, Button, Table } from 'react-bootstrap'
 import { RefereeSeason } from './data'
+import {DateTime} from 'luxon'
 
 interface Props {
   season: RefereeSeason
@@ -72,7 +73,7 @@ const AccordionSeason: React.VFC<Props> = ({ season }) => {
             <tbody>
               {season.matches.map((match) => (
                 <tr>
-                  <td>{match.tidspunkt.replace('T', ' ')}</td>
+                  <td>{DateTime.fromISO(match.tidspunkt).setLocale('no').toFormat('dd-LLL')}</td>
                   <td>{match.tournament}</td>
                   <td>
                     <a href={`https://www.fotball.no/fotballdata/kamp/?fiksId=${match.fiksId}`} target="_blank">

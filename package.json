@@ -1,8 +1,8 @@
 {
   "name": "kortglad2",
   "version": "1.0.0",
-  "description": "", 
-  "scripts": {    
+  "description": "",
+  "scripts": {
     "build": "tsc && esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js",
     "watch": "tsc --watch & esbuild src/main/ts/main.tsx --bundle --minify --sourcemap --outfile=public/bundle.js --watch"
   },
@@ -18,16 +18,18 @@
   },
   "homepage": "https://github.com/magott/kortglad2#readme",
   "dependencies": {
+    "@types/luxon": "^2.3.0",
     "@types/react": "^17.0.37",
     "@types/react-bootstrap": "^0.32.28",
-    "@types/react-dom": "^17.0.11",
     "@types/react-bootstrap-typeahead": "^5.1.8",
+    "@types/react-dom": "^17.0.11",
     "bootstrap": "^5.1.3",
     "esbuild": "^0.14.2",
+    "luxon": "^2.3.1",
     "react": "^17.0.2",
     "react-bootstrap": "^2.0.3",
+    "react-bootstrap-typeahead": "^5.2.1",
     "react-dom": "^17.0.2",
-    "typescript": "^4.5.3",
-    "react-bootstrap-typeahead": "^5.2.1"
+    "typescript": "^4.5.3"
   }
 }
