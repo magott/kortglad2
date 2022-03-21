@@ -32,7 +32,7 @@ class ScraperTest extends munit.FunSuite {
   test("can parse match") {
     val file = ScraperTest.getFile("/match-page.html")
     val doc = Jsoup.parse(file, "UTF-8")
-    val matchStat = Scraper.parseMatch(FiksId(1234), doc)
+    val matchStat = Scraper.parseMatch(FiksId(1234), doc).get
     println(matchStat.tournament)
     assert(matchStat.tournament.isDefined)
   }
@@ -44,6 +44,15 @@ class ScraperTest extends munit.FunSuite {
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.extractRefereeFromSingleMatch(doc)
     assert(parsed.isEmpty, "Hidden referee should return None")
+  }
+
+  test("will not scrape postponed match") {
+
+    val file = ScraperTest.getFile("/match-page-postponed-game.html")
+
+    val doc = Jsoup.parse(file, "UTF-8")
+    val parsed = Scraper.parseMatch(FiksId(1234), doc)
+    assert(parsed.isEmpty, "Postponed match should return None")
   }
 
 }

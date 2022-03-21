@@ -35,14 +35,14 @@ class RefereeService(db: Sessions) {
 
         val matchesPerSeason =
           toScrape
-            .map(x => Scraper.scrapeMatch(x.fiksId))
+            .flatMap(x => Scraper.scrapeMatch(x.fiksId))
             .groupBy(_.tidspunkt.getYear)
 
         val seasons = db.tx {
           for case (year, matchStats) <- matchesPerSeason do
             upsertSeason(fiksId, Year.of(year), DbMatchStats(matchStats)).update
           updateLastSync(fiksId).update
-          if (!toScrape.isEmpty)
+          if (toScrape.nonEmpty)
             activateReferee(fiksId).update
           refereeSeasonsByRefereeId(fiksId).to(List)
         }
@@ -57,7 +57,7 @@ class RefereeService(db: Sessions) {
     for
       matchDoc <- Scraper.scrapeSingleMatch(matchId)
       referee <- Scraper.extractRefereeFromSingleMatch(matchDoc)
-      matchStats = Scraper.parseMatch(matchId, matchDoc)
+      matchStats <- Scraper.parseMatch(matchId, matchDoc)
     yield db.tx {
       upsertReferee(referee.fiksId, referee.name).update
       upsertMatch(referee.fiksId, matchStats).update

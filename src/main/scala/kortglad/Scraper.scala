@@ -37,7 +37,7 @@ object Scraper:
       val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
       Some(Referee(fiksId, dommerLink.text()))
 
-  def scrapeMatch(matchId: FiksId): MatchStat =
+  def scrapeMatch(matchId: FiksId): Option[MatchStat] =
     val doc = Jsoup.connect(matchTemplate(matchId).toString).get()
     parseMatch(matchId, doc)
 
@@ -105,32 +105,45 @@ object Scraper:
     MatchList(refName, fiksIdAndKickoff)
 
   def parseMatch(matchId: FiksId, kampDoc: Document) =
-    val lag = kampDoc
-      .select("span.match__teamname-img")
-      .asScala
-      .map(_.nextElementSibling().text())
-    val tournament =
-      kampDoc.select("div > p:contains(Turnering:) > a").text()
-    val home = lag.head
-    val away = lag.drop(1).head
-    val dateText = kampDoc.select("span.match__arenainfo-date").text()
-    val tidspunkt = LocalDateTime.parse(
-      dateText,
-      DateTimeFormatter.ofPattern("dd.MM.yyyy HH.mm")
-    )
-    val matchEvents = kampDoc.select("ul.match__events")
-    val yellows = matchEvents.select("span.icon-yellow-card--events")
-    val yellowReds = matchEvents.select("span.icon-yellow-red-card--events")
-    val reds = matchEvents.select("span.icon-red-card--events")
+    val result =
+      kampDoc
+        .select("section.grid > div.flex-box > div.match__result > strong")
+        .text()
+    val resultIsSet = !result.isBlank
+    if (resultIsSet) {
+      val lag = kampDoc
+        .select("span.match__teamname-img")
+        .asScala
+        .map(_.nextElementSibling().text())
+      val tournament =
+        kampDoc.select("div > p:contains(Turnering:) > a").text()
+      val home = lag.head
+      val away = lag.drop(1).head
+      val dateText = kampDoc.select("span.match__arenainfo-date").text()
+      val tidspunkt = LocalDateTime.parse(
+        dateText,
+        DateTimeFormatter.ofPattern("dd.MM.yyyy HH.mm")
+      )
+      val matchEvents = kampDoc.select("ul.match__events")
+      val yellows = matchEvents.select("span.icon-yellow-card--events")
+      val yellowReds = matchEvents.select("span.icon-yellow-red-card--events")
+      val reds = matchEvents.select("span.icon-red-card--events")
 
-    MatchStat(
-      matchId,
-      tidspunkt,
-      Option.unless(tournament.isBlank) { tournament },
-      home,
-      away,
-      CardStat(yellows.size(), yellowReds.size(), reds.size())
-    )
+      Some(
+        MatchStat(
+          matchId,
+          tidspunkt,
+          Option.unless(tournament.isBlank) {
+            tournament
+          },
+          home,
+          away,
+          CardStat(yellows.size(), yellowReds.size(), reds.size())
+        )
+      )
+    } else {
+      None
+    }
 
   def hovedDommerIkkeFutsal(rowElement: Element) =
     val cells = rowElement.select("td").asScala
