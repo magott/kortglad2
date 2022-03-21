@@ -149,7 +149,7 @@ object Scraper:
   def hovedDommerIkkeFutsal(rowElement: Element) =
     val cells = rowElement.select("td").asScala
     cells.exists(_.text() == "HD") && cells.forall(
-      !_.text().startsWith("Futsal")
+      !_.text().contains("Futsal")
     )
 
   def spiltKamp(rowElement: Element) =
