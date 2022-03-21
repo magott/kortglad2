@@ -20,6 +20,9 @@ echo "Checking for uncomitted changes"
 git update-index --refresh
 git diff-index --quiet HEAD -- || echo "Uncommitted changes, aborting"
 
+echo "Logging into heroku container"
+heroku container:login
+
 echo "Building"
 sbt stage
 echo "Pushing container to heroku"
