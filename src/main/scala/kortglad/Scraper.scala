@@ -142,6 +142,7 @@ object Scraper:
         )
       )
     } else {
+      log.info(s"$matchId does not have a final score reported, skipping")
       None
     }
 
