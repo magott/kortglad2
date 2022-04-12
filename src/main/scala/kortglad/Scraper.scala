@@ -3,6 +3,7 @@ package kortglad
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import bloque.http.*
@@ -155,10 +156,18 @@ object Scraper:
   def spiltKamp(rowElement: Element) =
     LocalDate
       .parse(
-        rowElement.selectFirst("td").text(),
+        rowElement.selectFirst("td").text().trim,
         DateTimeFormatter.ofPattern("dd.MM.yyyy")
       )
-      .isBefore(LocalDate.now())
+      .atTime(
+        LocalTime.parse(
+          rowElement.select("td").get(1).text().trim,
+          DateTimeFormatter.ofPattern("HH.mm")
+        )
+      )
+      .isBefore(
+        LocalDateTime.now().plusHours(2)
+      ) //Spilt kamp om startidspunkt er 2 timer etter nå
 
   def dateElementToLocalDate(element: Element) =
     LocalDate.parse(
