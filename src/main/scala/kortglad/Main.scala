@@ -36,7 +36,9 @@ import scala.util.Properties
 import scala.util.Using
 import java.time.OffsetDateTime
 
+import java.util.TimeZone
 @main def main =
+  TimeZone.setDefault(TimeZone.getTimeZone("Europe/Oslo"))
   val hikariConfig = Properties
     .envOrNone("DATABASE_URL")
     .map(databaseUrlToHikariConfig)
