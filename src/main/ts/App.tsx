@@ -84,8 +84,9 @@ const App: React.VFC = () => {
   return (
     <Container fluid>
       <h1>Kortglad</h1>
-      <p>Sjekk kortstatistikk fra og med 2021-sesongen</p>
-      <p>(Futsal er ikke med!)</p>
+      <p>Sjekk kortstatistikk</p>
+      <p><small>Viser statistikk minimum 12 måneder tilbake i tid</small></p>
+      <p><small>(Futsal er ikke med!)</small></p>
       <p>
         <Form>
           <Row>

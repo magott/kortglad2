@@ -85,7 +85,7 @@ const AccordionSeason: React.VFC<Props> = ({ season }) => {
                     <br />
                     Gult nr 2 {match.cards.yellowToRed}
                     <br />
-                    Gult {match.cards.yellow}
+                    Gule {match.cards.yellow}
                   </td>
                 </tr>
               ))}
