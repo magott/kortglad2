@@ -12,27 +12,6 @@ import java.sql.ResultSet
 import java.time.OffsetDateTime
 import scala.util.Properties
 
-//given Row[PGobject] = Row
-//  .jdbc(Types.OTHER, Nil, _.getObject(_), _.setObject(_, _))
-//  .imap(_.asInstanceOf[PGobject], identity)
-
-//given Row[OffsetDateTime] = Row
-//  .jdbc(
-//    Types.TIMESTAMP_WITH_TIMEZONE,
-//    Nil,
-//    _.getObject(_, classOf[OffsetDateTime]),
-//    _.setObject(_, _)
-//  )
-
-//def jsonb[A](using j: Json[A]): Row[A] =
-//  def read(pg: PGobject) = Json.read(pg.getValue, false)
-//  def write(a: A) =
-//    val pg = new PGobject
-//    pg.setType("jsonb")
-//    pg.setValue(Json.default.write(a))
-//    pg
-//  Row[PGobject].imap(read, write)
-
 import scala.util.Using
 import java.time.OffsetDateTime
 

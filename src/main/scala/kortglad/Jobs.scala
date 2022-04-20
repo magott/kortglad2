@@ -25,7 +25,7 @@ object Jobs {
     def staleDate = OffsetDateTime.now(OSLO).withDayOfYear(1).`with`(java.time.LocalTime.MIN)
 
     def refereeRefresherJob(db: Sessions) =
-      logger.info(s"Refresh referee job started refershing referees not synced since ${staleDate}")
+      logger.info(s"Refresh referee job started refershing referees not synced since before ${staleDate}")
       val workList = LazyList.continually {
         db.tx {
           findStaleReferees(staleDate).option
