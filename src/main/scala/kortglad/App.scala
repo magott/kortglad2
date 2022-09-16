@@ -29,7 +29,6 @@ object App:
         Ok(Json(refs))
 
       case GET -> path"/health" =>
-        logger.info("Health check endpoint hit")
         if (health.isHealthy) Ok() else InternalServerError(health.reason.get())
 
       case _ => request.delegate
