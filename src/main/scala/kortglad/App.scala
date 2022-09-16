@@ -13,10 +13,10 @@ object App:
         logger.info(s"GET referee/$fiksId")
         try {
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
-            case Some(rStats) => Ok(Json(rStats))
-            case None =>
+            case Right(rStats) => Ok(Json(rStats))
+            case Left(error) =>
               NotFound(
-                Json(Error(s"Fant ikke dommer med fiks id ${fiksId.fiksId}"))
+                Json(error)
               )
         } catch {
           case e =>

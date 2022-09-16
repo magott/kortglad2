@@ -11,7 +11,7 @@ class RefereeService(db: Sessions) {
 
   val logger = LoggerFactory.getLogger("RefereeService")
 
-  def updateAndGetRefereeStats(fiksId: FiksId): Option[RefereeStats] = {
+  def updateAndGetRefereeStats(fiksId: FiksId): Either[Error, RefereeStats] = {
     Scraper
       .matchList(fiksId)
       .map { matchList =>

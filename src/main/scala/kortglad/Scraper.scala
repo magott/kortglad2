@@ -11,6 +11,7 @@ import org.jsoup.*
 import org.jsoup.nodes.{Document, Element}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import scala.concurrent.duration._
 
 object Scraper:
   val log = LoggerFactory.getLogger(getClass)
@@ -44,10 +45,18 @@ object Scraper:
 
   def matchList(fiksId: FiksId) = Try {
     log.info(s"Getting matchlist for $fiksId")
-    val doc = Jsoup.connect(refereeTemplate(fiksId).toString).get()
+    val doc =
+      Jsoup
+        .connect(refereeTemplate(fiksId).toString)
+        .timeout(25.seconds.toMillis.toInt)
+        .get()
     log.info(s"Got matchlist for $fiksId, start parsing")
     parseMatchList(doc)
-  }.toOption
+  }.toEither.left.map {
+    case r: HttpStatusException if r.getStatusCode == 404 =>
+      Error(s"Fant ikke dommer med fiks id $fiksId")
+    case _ => Error(s"Får ikke kontakt med fotball.no, forsøke senere")
+  }
 
   def scrapeMatches(fiksId: FiksId): Option[(String, List[FiksId])] =
     val doc = Try {

@@ -36,18 +36,18 @@ object Jobs {
         fiksId <- work
       do
         logger.info(s"Refreshing stale referee data for $fiksId")
-        val updated = Try{
-          RefereeService(db).updateAndGetRefereeStats(fiksId)
-        }.recover {
-          case e:_ => logger.error(s"Referee refresh failed for $fiksId", e)
-            db.tx{
-              updateLastSync(fiksId).update //TODO New column for failed sync?
-            }
-            None
-        }.toOption.flatten
-        logger.info(
-          s"Referee $fiksId has ${updated.map(_.totalNumberOfMatches).getOrElse("failed")} indexed"
-        )
+        RefereeService(db).updateAndGetRefereeStats(fiksId) match
+          case Left(err) =>
+            logger.error(s"Referee refresh failed for $fiksId", err)
+          case Right(updated) =>
+            logger.info(
+              s"Referee $fiksId has ${updated.totalNumberOfMatches} indexed"
+            )
+
+        db.tx{
+          updateLastSync(fiksId).update //TODO New column for failed sync?
+        }
+
       db.tx{
         logger.info("Looking for inactive referees to deactivate from future refresh")
         val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(Year.now()).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
