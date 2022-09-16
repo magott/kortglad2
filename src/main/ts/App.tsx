@@ -87,7 +87,7 @@ const App: React.VFC = () => {
 
   return (
     <Container fluid>
-      <h1>Kortglad</h1>
+      <h1><a href="/" style={{textDecoration: 'none', color: 'black'}}>Kortglad</a></h1>
       <p>Sjekk kortstatistikk</p>
       <p><small>Viser statistikk minimum 12 måneder tilbake i tid</small></p>
       <p><small>(Futsal er ikke med)</small></p>
