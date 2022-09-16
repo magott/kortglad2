@@ -69,9 +69,13 @@ const App: React.VFC = () => {
           const stats: RefereeStats = await response.json()
           setRefereeStats(stats)
         } else {
-          console.log('oh nos', response)
-          const error = await response.json()
-          setErrorMessage(error.message || 'Ukjent feil')
+          if(response.status == 504){
+            setErrorMessage("Fikk ikke kontakt med fotball.no. Vi restarter, prøv igjen om 1 minutt")
+          } else {
+            console.log('oh nos', response)
+            const error = await response.json()
+            setErrorMessage(error.message || 'Ukjent feil')
+          }
         }
       } finally {
         setFetching(false)
@@ -86,11 +90,20 @@ const App: React.VFC = () => {
       <h1>Kortglad</h1>
       <p>Sjekk kortstatistikk</p>
       <p><small>Viser statistikk minimum 12 måneder tilbake i tid</small></p>
-      <p><small>(Futsal er ikke med!)</small></p>
+      <p><small>(Futsal er ikke med)</small></p>
       <p>
         <Form>
           <Row>
             <Col>
+            </Col>
+          </Row>
+          <Row>
+            <Col xs={7}>
+              {errorMessage && (
+                  <Alert variant="danger" onClose={() => setErrorMessage(undefined)} dismissible>
+                    <p>{errorMessage}</p>
+                  </Alert>
+              )}
             </Col>
           </Row>
           <Row>
@@ -137,16 +150,6 @@ const App: React.VFC = () => {
                 {fetching && <Spinner as="span" animation="border" size="sm" />}
                 Hent statistikk
               </Button>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              {errorMessage && (
-                <Alert variant="danger" onClose={() => setErrorMessage(undefined)} dismissible>
-                  <Alert.Heading>{errorMessage}</Alert.Heading>
-                  <p>Har du skrevet riktig adresse til dommerdagbok fra fotball.no?</p>
-                </Alert>
-              )}
             </Col>
           </Row>
         </Form>

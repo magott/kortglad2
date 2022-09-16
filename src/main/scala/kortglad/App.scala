@@ -30,8 +30,6 @@ object App:
 
       case GET -> path"/health" =>
         logger.info("Health check endpoint hit")
-        if (health.isHealthy) Ok() else InternalServerError()
+        if (health.isHealthy) Ok() else InternalServerError(health.reason.get())
 
       case _ => request.delegate
-
-case class Error(message: String) derives Json
