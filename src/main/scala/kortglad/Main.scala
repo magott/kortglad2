@@ -19,9 +19,6 @@ val logger = LoggerFactory.getLogger("Main")
 
 @main def main =
   TimeZone.setDefault(TimeZone.getTimeZone("Europe/Oslo"))
-  Properties
-    .envOrNone("deploy_target")
-    .foreach(target => logger.info(s"""Starting app for ${target}"""))
   val hikariConfig = Properties
     .envOrNone("DATABASE_URL")
     .map(databaseUrlToHikariConfig)
@@ -48,11 +45,8 @@ val logger = LoggerFactory.getLogger("Main")
 
 def databaseUrlToHikariConfig(dbUriString: String) =
   val dbUri = java.net.URI.create(dbUriString)
-  val flyIOAppName = Properties.envOrNone("deploy_target")
-  val sslMode = flyIOAppName
-    .filter(target => target == "fly_io")
-    .map(_ => "")
-    .getOrElse("?sslmode=require")
+  val flyIOAppName = Properties.envOrNone("FLY_APP_NAME")
+  val sslMode = flyIOAppName.map(_ => "").getOrElse("?sslmode=require")
   val username = dbUri.getUserInfo.split(":")(0)
   val password = dbUri.getUserInfo.split(":")(1)
   val jdbcUrl =
