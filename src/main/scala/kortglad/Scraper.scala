@@ -54,8 +54,9 @@ object Scraper:
     parseMatchList(doc)
   }.toEither.left.map {
     case r: HttpStatusException if r.getStatusCode == 404 =>
-      Error(s"Fant ikke dommer med fiks id $fiksId")
-    case _ => Error(s"Får ikke kontakt med fotball.no, forsøke senere")
+      AppError.RefereeNotFound(fiksId)
+    case _ =>
+      AppError.GatewayError
   }
 
   def scrapeMatches(fiksId: FiksId): Option[(String, List[FiksId])] =

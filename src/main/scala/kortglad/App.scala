@@ -7,32 +7,31 @@ import org.slf4j.LoggerFactory
 
 object App:
   val logger = LoggerFactory.getLogger("Endpoints")
+  val health = HealthCheck()
   def run(db: Sessions): Request ?=> Response =
-    request match {
+    request match
       case GET -> path"/referee/${FiksId(fiksId)}" =>
         logger.info(s"GET referee/$fiksId")
-        try {
+        try
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
             case Right(rStats) => Ok(Json(rStats))
             case Left(error) =>
-              NotFound(
-                Json(error)
-              )
-        } catch {
+              if error == AppError.GatewayError then health.killMe()
+              error.response
+        catch
           case e =>
             e.printStackTrace()
             InternalServerError()
-        }
+
       case GET -> path"/search/referee" =>
         val q = request.query[Search]
-        val json = List(
-          IndexedReferee(FiksId(2245443), "Morten Andersen-Gott"),
-          IndexedReferee(FiksId(3715313), "Marius Wikestad Pedersen")
-        )
         val refs = RefereeService(db).searchReferee(q)
         Ok(Json(refs))
 
+      case GET -> path"/health" =>
+        logger.info("Health check endpoint hit")
+        if (health.isHealthy) Ok() else InternalServerError()
+
       case _ => request.delegate
-    }
 
 case class Error(message: String) derives Json
