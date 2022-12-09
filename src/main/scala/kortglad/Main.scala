@@ -24,7 +24,7 @@ val logger = LoggerFactory.getLogger("Main")
     .map(databaseUrlToHikariConfig)
     .getOrElse {
       val config = HikariConfig()
-      config.setJdbcUrl("jdbc:postgresql://localhost:5440/postgres")
+      config.setJdbcUrl("jdbc:postgresql://localhost:5540/postgres")
       config.setUsername("postgres")
       config.setPassword("postgres")
       config
