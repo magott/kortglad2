@@ -1,6 +1,6 @@
 enablePlugins(JavaAppPackaging)
 
-ThisBuild / scalaVersion := "3.1.0"
+ThisBuild / scalaVersion := "3.2.1"
 
 libraryDependencies ++= Seq(
   "no.arktekk.bloque" %% "party" % "0.1.0-SNAPSHOT",

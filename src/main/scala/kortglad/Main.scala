@@ -31,7 +31,7 @@ val logger = LoggerFactory.getLogger("Main")
     }
 
   Using.resource(HikariDataSource(hikariConfig)) { ds =>
-    val tx = Sessions.fromDataSource(ds)
+    val tx = Connections.fromDataSource(ds)
     val flyway = Flyway.configure().dataSource(ds).load()
     flyway.migrate()
     Jobs.TournamentScraperJob.schedule(tx)
@@ -39,7 +39,7 @@ val logger = LoggerFactory.getLogger("Main")
     Jobs.RefereeRefresherJob.schedule(tx)
     val port = Properties.envOrElse("PORT", "8080").toInt
     Jetty(port, "./public") {
-      App.run(tx)
+      request => App.run(tx, request)
     }
   }
 

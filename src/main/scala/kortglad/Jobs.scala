@@ -14,7 +14,7 @@ object Jobs {
   object RefereeRefresherJob {
     val OSLO = ZoneId.of("Europe/Oslo")
 
-    def schedule(db: Sessions) =
+    def schedule(db: Connections) =
       executor.scheduleWithFixedDelay(
         () => refereeRefresherJob(db),
         0,
@@ -24,7 +24,7 @@ object Jobs {
 
     def staleDate = OffsetDateTime.now(OSLO).withDayOfYear(1).`with`(java.time.LocalTime.MIN)
 
-    def refereeRefresherJob(db: Sessions) =
+    def refereeRefresherJob(db: Connections) =
       logger.info(s"Refresh referee job started refershing referees not synced since before ${staleDate}")
       val workList = LazyList.continually {
         db.tx {
@@ -76,7 +76,7 @@ object Jobs {
 
   object SingleMatchScraperJob {
 
-    def schedule(db: Sessions) =
+    def schedule(db: Connections) =
       executor.scheduleWithFixedDelay(
         () => singleMatchScrapeJob(db),
         1,
@@ -84,7 +84,7 @@ object Jobs {
         TimeUnit.MINUTES
       )
 
-    def singleMatchScrapeJob(db: Sessions) =
+    def singleMatchScrapeJob(db: Connections) =
       logger.info("Match scraper job started")
       val work = LazyList.continually {
         db.tx {
@@ -96,12 +96,12 @@ object Jobs {
         job <- matchJob
       do
         logger.info(s"Matchjob found match, will add $job")
-        val count = Try {
+        val count = try
           RefereeService(db).addSingleMatch(job.matchId)
-        }.recover{
-          case e:_  => logger.error(s"Match scraper job failed for ${job.matchId}, will be marked as completed", e)
-            0
-        }
+        catch
+          case e  => logger.error(s"Match scraper job failed for ${job.matchId}, will be marked as completed", e)
+            None
+
         logger.info(s"Match scraper $job update count ${count.getOrElse("nothing happened")}")
         db.tx {
           markMatchScrapeJobCompleted(job.id).update
@@ -123,10 +123,10 @@ object Jobs {
 
   object TournamentScraperJob{
 
-    def schedule(db: Sessions) =
+    def schedule(db: Connections) =
       executor.scheduleWithFixedDelay(() => tournamentScraperJob(db), 0, 1, TimeUnit.DAYS)
 
-    def tournamentScraperJob(db: Sessions) =
+    def tournamentScraperJob(db: Connections) =
       logger.info("Tournament scraper job started")
       val workList = LazyList.continually{
         db.tx {

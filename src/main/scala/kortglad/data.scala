@@ -9,7 +9,7 @@ import bloque.json.Json
 
 object FiksId:
   given Json[FiksId] = summon[Json[Int]].imap(apply, _.fiksId)
-  given fvar: Val[FiksId] = summon[Val[Int]].xmap(apply, _.fiksId, "fiksId")
+  given fvar: Txt[FiksId] = summon[Txt[Int]].xmap(apply, _.fiksId, "fiksId")
   export fvar.unapply
 
 case class FiksId(fiksId: Int) derives Params, Db

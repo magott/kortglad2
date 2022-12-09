@@ -15,16 +15,16 @@ import scala.concurrent.duration._
 
 object Scraper:
   val log = LoggerFactory.getLogger(getClass)
-  val fotballBaseUrl = uri"https://www.fotball.no"
+  val fotballdata = uri"https://www.fotball.no" / "fotballdata"
 
   def refereeTemplate(fiksId: FiksId) =
-    fotballBaseUrl / "fotballdata" / "person" / "dommeroppdrag" +? ("fiksId", fiksId.fiksId)
+    fotballdata / "person" / "dommeroppdrag" +? fiksId
 
-  def matchTemplate(s: FiksId) =
-    fotballBaseUrl / "fotballdata" / "kamp" +? ("fiksId", s.fiksId)
+  def matchTemplate(fiksId: FiksId) =
+    fotballdata / "kamp" +? fiksId
 
   def tournamentTemplate(fiksId: FiksId) =
-    fotballBaseUrl / "fotballdata" / "turnering" / "terminliste" +? ("fiksId", fiksId.fiksId)
+    fotballdata / "turnering" / "terminliste" +? fiksId
 
   def scrapeSingleMatch(fiksId: FiksId) =
     Try {
@@ -36,7 +36,7 @@ object Scraper:
       kampDoc.select("div > p > span:contains(Dommer:) + strong > a")
     if (dommerLink.isEmpty) None
     else
-      val fiksId = Uri.fromString(dommerLink.attr("href")).query[FiksId]
+      val fiksId = Uri.fromString(dommerLink.attr("href")).query.as[FiksId]
       Some(Referee(fiksId, dommerLink.text()))
 
   def scrapeMatch(matchId: FiksId): Option[MatchStat] =
@@ -82,7 +82,7 @@ object Scraper:
       .map(row =>
         Uri
           .fromString(row.select("td.table--mobile__result > a").attr("href"))
-          .query[FiksId]
+          .query.as[FiksId]
       )
       .toList
 
@@ -103,7 +103,7 @@ object Scraper:
         FiksIdAndKickoff(
           Uri
             .fromString(tr.select("td > a").get(1).attr("href"))
-            .query[FiksId],
+            .query.as[FiksId],
           dateElementToLocalDate(
             tr.selectFirst("td")
           )

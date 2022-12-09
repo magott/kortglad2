@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 object App:
   val logger = LoggerFactory.getLogger("Endpoints")
   val health = HealthCheck()
-  def run(db: Sessions): Request ?=> Response =
+  def run(db: Connections, request:Request): Server[Response] =
     request match
       case GET -> path"/referee/${FiksId(fiksId)}" =>
         logger.info(s"GET referee/$fiksId")
@@ -24,11 +24,11 @@ object App:
             InternalServerError()
 
       case GET -> path"/search/referee" =>
-        val q = request.query[Search]
+        val q = request.query.as[Search]
         val refs = RefereeService(db).searchReferee(q)
         Ok(Json(refs))
 
       case GET -> path"/health" =>
         if (health.isHealthy) Ok() else InternalServerError(health.reason.get())
 
-      case _ => request.delegate
+      case _ => delegate

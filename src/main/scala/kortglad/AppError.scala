@@ -7,6 +7,6 @@ enum AppError derives Json:
   case RefereeNotFound(fiksId: FiksId)
   case GatewayError
 
-  def response(using Request) = this match
+  def response(using Respond) = this match
     case RefereeNotFound(_) => Status.NotFound(Json(this))
     case GatewayError       => Status.GatewayTimeout(Json(this))

@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.time.Year
 import java.time.LocalDate
 
-class RefereeService(db: Sessions) {
+class RefereeService(db: Connections) {
 
   val logger = LoggerFactory.getLogger("RefereeService")
 
