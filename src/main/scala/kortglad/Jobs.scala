@@ -18,22 +18,20 @@ object Jobs {
       executor.scheduleWithFixedDelay(
         () => refereeRefresherJob(db),
         0,
-        30,
-        TimeUnit.DAYS
+        1,
+        TimeUnit.HOURS
       )
 
-    def staleDate = OffsetDateTime.now(OSLO).withDayOfYear(1).`with`(java.time.LocalTime.MIN)
+    def staleDate = OffsetDateTime.now(OSLO).minusWeeks(4).`with`(java.time.LocalTime.MIN)
 
     def refereeRefresherJob(db: Connections) =
-      logger.info(s"Refresh referee job started refershing referees not synced since before ${staleDate}")
-      val workList = LazyList.continually {
+      logger.info(s"Refresh referee job started refreshing referees not synced since before ${staleDate}")
+      val workList =
         db.tx {
-          findStaleReferees(staleDate).option
+          findStaleReferees(staleDate).to(List)
         }
-      }
       for
-        work <- workList.takeWhile(_.isDefined)
-        fiksId <- work
+        fiksId <- workList
       do
         logger.info(s"Refreshing stale referee data for $fiksId")
         RefereeService(db).updateAndGetRefereeStats(fiksId) match
@@ -57,7 +55,7 @@ object Jobs {
 
     def findStaleReferees(staleDate: OffsetDateTime) =
       sql"""
-       select fiks_id from referee where active is true and (last_sync is null or referee.last_sync < $staleDate) order by last_sync limit 1
+       select fiks_id from referee where active is true and (last_sync is null or referee.last_sync < $staleDate) order by last_sync limit 10
        """.query[FiksId]
 
     def inactivateRefereesWithNoMatchesSinceYearBefore(year: Year) =
