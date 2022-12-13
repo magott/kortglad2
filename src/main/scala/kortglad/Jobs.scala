@@ -1,5 +1,6 @@
 package kortglad
 import bloque.db.*
+import kortglad.Scraper.Referee
 import org.slf4j.LoggerFactory
 
 import java.time.{Instant, LocalDate, LocalDateTime, Month, OffsetDateTime, Year, ZoneId, ZoneOffset, ZonedDateTime}
@@ -31,21 +32,21 @@ object Jobs {
           findStaleReferees(staleDate).to(List)
         }
       for
-        fiksId <- workList
+        referee <- workList
       do
-        logger.info(s"Refreshing stale referee data for $fiksId")
-        RefereeService(db).updateAndGetRefereeStats(fiksId) match
+        logger.info(s"Refreshing stale referee data for ${referee}")
+        RefereeService(db).updateAndGetRefereeStats(referee.fiksId) match
           case Left(err) =>
-            logger.error(s"Referee refresh failed for $fiksId", err)
+            logger.error(s"Referee refresh failed for $referee", err)
           case Right(updated) =>
             logger.info(
-              s"Referee $fiksId has ${updated.totalNumberOfMatches} indexed"
+              s"Referee ${referee.name} [${referee.fiksId.fiksId}] has ${updated.totalNumberOfMatches} indexed"
             )
 
         db.tx{
-          updateLastSync(fiksId).update //TODO New column for failed sync?
+          updateLastSync(referee.fiksId).update //TODO New column for failed sync?
         }
-
+      logger.info(s"Refreshed ${workList.size} referees")
       db.tx{
         logger.info("Looking for inactive referees to deactivate from future refresh")
         val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(Year.now()).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
@@ -55,8 +56,8 @@ object Jobs {
 
     def findStaleReferees(staleDate: OffsetDateTime) =
       sql"""
-       select fiks_id from referee where active is true and (last_sync is null or referee.last_sync < $staleDate) order by last_sync limit 10
-       """.query[FiksId]
+       select fiks_id, name from referee where active is true and (last_sync is null or referee.last_sync < $staleDate) order by last_sync limit 10
+       """.query[Referee]
 
     def inactivateRefereesWithNoMatchesSinceYearBefore(year: Year) =
       sql"""

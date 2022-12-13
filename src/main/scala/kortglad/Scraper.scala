@@ -7,6 +7,7 @@ import java.time.LocalTime
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import bloque.http.*
+import bloque.db.Db
 import org.jsoup.*
 import org.jsoup.nodes.{Document, Element}
 import scala.jdk.CollectionConverters.*
@@ -88,7 +89,7 @@ object Scraper:
 
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
-  case class Referee(fiksId: FiksId, name: String)
+  case class Referee(fiksId: FiksId, name: String) derives Db
 
   def parseMatchList(document: Document): MatchList =
     val body = document.body()
