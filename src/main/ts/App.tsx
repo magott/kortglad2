@@ -3,15 +3,49 @@ import { Button, Col, Container, Form, Row, Spinner, Accordion, Alert } from 're
 import AccordionSeason from './AccordionSeason'
 import {IndexedReferee, RefereeStats} from './data'
 import {AsyncTypeahead, Typeahead} from 'react-bootstrap-typeahead'
+import {useSearchParams} from 'react-router-dom'
 
 
 const App: React.VFC = () => {
   const [fetching, setFetching] = React.useState(false)
   const [state, setState] = React.useState<{loading:boolean, items:IndexedReferee[]}>({loading:false, items:[]})
 
-  const [dommer, setDommer] = React.useState(
-    () => new URLSearchParams(new URL(window.location.href).search).get('fiksId') || ''
-  )
+  const [searchParams, setSearchParams] = useSearchParams({})
+
+  const dommer = React.useMemo(() =>
+      searchParams.get('fiksId') || ''
+  , [searchParams.get('fiksId')])
+
+  const setDommer = (fiksId:string) => setSearchParams({fiksId})
+
+
+    const fetchDommer = async () => {try {
+        setErrorMessage(undefined)
+        setFetching(true)
+        const response = await fetch(`/referee/${dommer}`)
+        if (response.ok) {
+          const stats: RefereeStats = await response.json()
+          setRefereeStats(stats)
+        } else {
+          if(response.status == 504){
+            setErrorMessage("Fikk ikke kontakt med fotball.no. Vi restarter, prøv igjen om 1 minutt")
+          } else {
+            console.log('oh nos', response)
+            const error = await response.json()
+            setErrorMessage(error.message || 'Ukjent feil')
+          }
+        }
+      } finally {
+        setFetching(false)
+      }}
+
+  React.useEffect( () => {
+    console.log("useEffect", dommer)
+    if(dommer) {
+      fetchDommer()
+    }
+  }, [dommer])
+
   const [refereeStats, setRefereeStats] = React.useState<RefereeStats>()
   const [errorMessage, setErrorMessage] = React.useState<String>()
 
@@ -21,12 +55,9 @@ const App: React.VFC = () => {
       (e) => {
         // Check whether the 'enter' key was pressed, and also make sure that
         // no menu items are highlighted.
-        console.log("Key pressed", e)
+        console.log("Key pressed", e.keyCode)
         if (e.keyCode === 13 && activeIndex === -1) {
-          console.log("Enter!!")
-          if(fiksId != null && fiksId != ""){
-            hentStatistikk()
-          }
+          console.log("Enter!!", dommer)
         }
       },
       [activeIndex, dommer]
@@ -44,46 +75,20 @@ const App: React.VFC = () => {
     }
   }
 
-  const fiksId = React.useMemo(() => {
-    if (dommer) {
-      const parsed = Number.parseInt(dommer)
-      if (parsed) {
-        return parsed
-      } else {
-        return getFiksIdFromUrl(dommer)
-      }
-    } else {
-      return null
-    }
-  }, [dommer])
+  // const fiksId = React.useMemo(() => {
+  //   if (dommer) {
+  //     const parsed = Number.parseInt(dommer)
+  //     if (parsed) {
+  //       return parsed
+  //     } else {
+  //       return getFiksIdFromUrl(dommer)
+  //     }
+  //   } else {
+  //     return null
+  //   }
+  // }, [dommer])
 
-  const hentStatistikk = async () => {
-    console.log("Henter statistikk for "+fiksId)
-    if (fiksId !== null) {
-      history.pushState({}, '', `?fiksId=${fiksId}`)
-      try {
-        setErrorMessage(undefined)
-        setFetching(true)
-        const response = await fetch(`/referee/${fiksId}`)
-        if (response.ok) {
-          const stats: RefereeStats = await response.json()
-          setRefereeStats(stats)
-        } else {
-          if(response.status == 504){
-            setErrorMessage("Fikk ikke kontakt med fotball.no. Vi restarter, prøv igjen om 1 minutt")
-          } else {
-            console.log('oh nos', response)
-            const error = await response.json()
-            setErrorMessage(error.message || 'Ukjent feil')
-          }
-        }
-      } finally {
-        setFetching(false)
-      }
-    } else {
-      history.pushState({}, '', '')
-    }
-  }
+
 
   return (
     <Container fluid>
@@ -111,6 +116,7 @@ const App: React.VFC = () => {
               <AsyncTypeahead
                   placeholder="Søk etter dommer eller lim inn adresse til dommerdagbok fra fotball.no"
                   isLoading={state.loading}
+                  onKeyDown={onKeyDown}
                   labelKey={(option) => option.name}
                   onSearch={(query) => {
                     setState({...state, loading: true});
@@ -124,11 +130,11 @@ const App: React.VFC = () => {
                   options={state.items}
                   onChange={(selected) => {
                     if(selected.length == 1) {
-                      console.log(selected[0].fiksId)
+                      console.log("onChange", selected[0].fiksId)
                       setDommer(selected[0].fiksId.toString())
                     }else{
                       console.log("Ikke dommer" +selected)
-                      setDommer('')
+
                     }
                   }}
                   onInputChange={(input, e: Event) => {
@@ -146,7 +152,7 @@ const App: React.VFC = () => {
               </AsyncTypeahead>
             </Col>
             <Col xs={3}>
-              <Button variant="primary" onClick={() => hentStatistikk()} disabled={fiksId == null}>
+              <Button variant="primary" onClick={fetchDommer} disabled={!dommer}>
                 {fetching && <Spinner as="span" animation="border" size="sm" />}
                 Hent statistikk
               </Button>
