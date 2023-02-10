@@ -4,17 +4,20 @@ import bloque.db.*
 import bloque.http.*, Server.*
 import bloque.json.Json
 import org.slf4j.LoggerFactory
+import java.time.Instant
 
 object App:
   val logger = LoggerFactory.getLogger("Endpoints")
   val health = HealthCheck()
-  def run(db: Connections, request:Request): Response =
+  def run(db: Connections, request: Request): Response =
     request match
       case GET -> path"/referee/${FiksId(fiksId)}" =>
         logger.info(s"GET referee/$fiksId")
         try
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
-            case Right(rStats) => Ok(Json(rStats))
+            case Right(rStats) =>
+              StatisticsDatabase(db).addVisit(fiksId, Instant.now())
+              Ok(Json(rStats))
             case Left(error) =>
               if error == AppError.GatewayError then health.killMe()
               error.response
