@@ -9,12 +9,12 @@ import org.slf4j.LoggerFactory
 
 import java.sql.Types
 import java.sql.ResultSet
-import java.time.OffsetDateTime
-import scala.util.Properties
-import scala.util.Using
+import java.time.{OffsetDateTime, ZoneId}
+import scala.util.{Properties, Using}
 import java.time.OffsetDateTime
 import java.util.TimeZone
 
+val OSLO = ZoneId.of("Europe/Oslo")
 val logger = LoggerFactory.getLogger("Main")
 
 @main def main =
@@ -38,8 +38,8 @@ val logger = LoggerFactory.getLogger("Main")
     Jobs.SingleMatchScraperJob.schedule(tx)
     Jobs.RefereeRefresherJob.schedule(tx)
     val port = Properties.envOrElse("PORT", "8080").toInt
-    Jetty(port, "./public") {
-      request => App.run(tx, request)
+    Jetty(port, "./public") { request =>
+      App.run(tx, request)
     }
   }
 

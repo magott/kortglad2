@@ -1,14 +1,12 @@
 package kortglad
 
-import kortglad.Jobs.RefereeRefresherJob.OSLO
-
 import java.time.{Instant, LocalDate, OffsetDateTime, ZoneId}
 
 class JobTest extends munit.FunSuite {
 
   test("Creates correct stale date for referee referesh") {
     val expected = OffsetDateTime
-      .now(ZoneId.of("Europe/Oslo"))
+      .now(OSLO)
       .withMonth(1)
       .withDayOfMonth(1)
       .withHour(0)

@@ -13,7 +13,6 @@ object Jobs {
   val logger = LoggerFactory.getLogger("Jobs")
 
   object RefereeRefresherJob {
-    val OSLO = ZoneId.of("Europe/Oslo")
 
     def schedule(db: Connections) =
       executor.scheduleWithFixedDelay(
@@ -26,7 +25,7 @@ object Jobs {
     def staleDate = OffsetDateTime.now(OSLO).minusWeeks(4).`with`(java.time.LocalTime.MIN)
 
     def refereeRefresherJob(db: Connections) =
-      logger.info(s"Refresh referee job started refreshing referees not synced since before ${staleDate}")
+      logger.info(s"Refresh referee job started refreshing active referees that have not been synced since before ${staleDate}")
       val workList =
         db.tx {
           findStaleReferees(staleDate).to(List)
