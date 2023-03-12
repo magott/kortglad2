@@ -55,4 +55,5 @@ def databaseUrlToHikariConfig(dbUriString: String) =
   config.setJdbcUrl(jdbcUrl)
   config.setUsername(username)
   config.setPassword(password)
+  config.setConnectionTimeout(20_000)
   config
