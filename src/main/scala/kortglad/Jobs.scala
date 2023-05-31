@@ -106,10 +106,10 @@ object Jobs {
 
     def singleMatchScrapeJob(db: Connections) =
       logger.info("Match scraper job started")
-      val work = db.tx {
+      val workList = db.tx {
         readNextMatchScrapeJob.to(List)
       }
-      for job <- work do
+      for job <- workList do
         logger.info(s"Matchjob found match, will add $job")
         val count =
           try RefereeService(db).addSingleMatch(job.matchId)
@@ -127,7 +127,7 @@ object Jobs {
         db.tx {
           markMatchScrapeJobCompleted(job.id).update
         }
-      logger.info("Match scraper job ended")
+      logger.info(s"Match scraper job ended, added ${workList.size} matches")
 
     def readNextMatchScrapeJob =
       sql"""
