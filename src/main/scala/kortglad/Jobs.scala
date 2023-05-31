@@ -3,7 +3,17 @@ import bloque.db.*
 import kortglad.Scraper.Referee
 import org.slf4j.LoggerFactory
 
-import java.time.{Instant, LocalDate, LocalDateTime, Month, OffsetDateTime, Year, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  Month,
+  OffsetDateTime,
+  Year,
+  ZoneId,
+  ZoneOffset,
+  ZonedDateTime
+}
 import java.util.concurrent.{Executors, TimeUnit}
 import scala.util.Try
 
@@ -22,17 +32,18 @@ object Jobs {
         TimeUnit.HOURS
       )
 
-    def staleDate = OffsetDateTime.now(OSLO).minusWeeks(4).`with`(java.time.LocalTime.MIN)
+    def staleDate =
+      OffsetDateTime.now(OSLO).minusWeeks(4).`with`(java.time.LocalTime.MIN)
 
     def refereeRefresherJob(db: Connections) =
-      logger.info(s"Refresh referee job started refreshing active referees that have not been synced since before ${staleDate}")
+      logger.info(
+        s"Refresh referee job started refreshing active referees that have not been synced since before ${staleDate}"
+      )
       val workList =
         db.tx {
           findStaleReferees(staleDate).to(List)
         }
-      for
-        referee <- workList
-      do
+      for referee <- workList do
         logger.info(s"Refreshing stale referee data for ${referee}")
         RefereeService(db).updateAndGetRefereeStats(referee.fiksId) match
           case Left(err) =>
@@ -42,14 +53,23 @@ object Jobs {
               s"Referee ${referee.name} [${referee.fiksId.fiksId}] has ${updated.totalNumberOfMatches} indexed"
             )
 
-        db.tx{
-          updateLastSync(referee.fiksId).update //TODO New column for failed sync?
+        db.tx {
+          updateLastSync(
+            referee.fiksId
+          ).update //TODO New column for failed sync?
         }
       logger.info(s"Refreshed ${workList.size} referees")
-      db.tx{
-        logger.info("Looking for inactive referees to deactivate from future refresh")
-        val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(Year.now()).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
-        logger.info(s"Found ${deactivated.size} referees that were deactivated ${deactivated.mkString("[", ",", "]")}")
+      db.tx {
+        logger.info(
+          "Looking for inactive referees to deactivate from future refresh"
+        )
+        val deactivated = inactivateRefereesWithNoMatchesSinceYearBefore(
+          Year.now()
+        ).generatedKeys[(Int, String)]("fiks_id", "name").to(List)
+        logger.info(
+          s"Found ${deactivated.size} referees that were deactivated ${deactivated
+            .mkString("[", ",", "]")}"
+        )
       }
       logger.info("Refresh referee job ended")
 
@@ -67,7 +87,9 @@ object Jobs {
             left outer join referee_season rs on r.fiks_id = rs.referee_id
             where (last_sync is not null and extract(YEAR from last_sync) >= ${year.getValue})
             group by r.fiks_id, rs.referee_id
-            having max(year) is null or max(year) < ${year.minusYears(1).getValue})
+            having max(year) is null or max(year) < ${year
+        .minusYears(1)
+        .getValue})
        """
 
   }
@@ -78,29 +100,30 @@ object Jobs {
       executor.scheduleWithFixedDelay(
         () => singleMatchScrapeJob(db),
         1,
-        60,
+        10,
         TimeUnit.MINUTES
       )
 
     def singleMatchScrapeJob(db: Connections) =
       logger.info("Match scraper job started")
-      val work = LazyList.continually {
-        db.tx {
-          readNextMatchScrapeJob.option
-        }
+      val work = db.tx {
+        readNextMatchScrapeJob.to(List)
       }
-      for
-        matchJob <- work.takeWhile(_.isDefined)
-        job <- matchJob
-      do
+      for job <- work do
         logger.info(s"Matchjob found match, will add $job")
-        val count = try
-          RefereeService(db).addSingleMatch(job.matchId)
-        catch
-          case e  => logger.error(s"Match scraper job failed for ${job.matchId}, will be marked as completed", e)
-            None
+        val count =
+          try RefereeService(db).addSingleMatch(job.matchId)
+          catch
+            case e =>
+              logger.error(
+                s"Match scraper job failed for ${job.matchId}, will be marked as completed",
+                e
+              )
+              None
 
-        logger.info(s"Match scraper $job update count ${count.getOrElse("nothing happened")}")
+        logger.info(
+          s"Match scraper $job update count ${count.getOrElse("nothing happened")}"
+        )
         db.tx {
           markMatchScrapeJobCompleted(job.id).update
         }
@@ -108,7 +131,7 @@ object Jobs {
 
     def readNextMatchScrapeJob =
       sql"""
-        select id, match_id from match_scraper_job order by id limit 1   
+        select id, match_id from match_scraper_job order by id limit 10
     """.query[MatchJob]
 
     def markMatchScrapeJobCompleted(jobId: Int) =
@@ -119,14 +142,19 @@ object Jobs {
     case class MatchJob(id: Int, matchId: FiksId) derives Db
   }
 
-  object TournamentScraperJob{
+  object TournamentScraperJob {
 
     def schedule(db: Connections) =
-      executor.scheduleWithFixedDelay(() => tournamentScraperJob(db), 0, 1, TimeUnit.DAYS)
+      executor.scheduleWithFixedDelay(
+        () => tournamentScraperJob(db),
+        0,
+        1,
+        TimeUnit.DAYS
+      )
 
     def tournamentScraperJob(db: Connections) =
       logger.info("Tournament scraper job started")
-      val workList = LazyList.continually{
+      val workList = LazyList.continually {
         db.tx {
           readNextTournamentScraperJob.option
         }
@@ -135,31 +163,28 @@ object Jobs {
         tournamentJob <- workList.takeWhile(_.isDefined)
         work <- tournamentJob
       do
-       Try {
+        Try {
           val doc = Scraper.readTournament(work)
           val matchIds = Scraper.parseTournament(doc)
-          for
-            matchId <- matchIds
-          do
-            db.tx{
+          for matchId <- matchIds do
+            db.tx {
               addMatchForScraping(matchId).update
               markTournamentScrapeJobCompleted(work).update
             }
           matchIds
-      }.recover{ err =>
-         logger.info(s"Tournament $work scraping failed, marking as complete ",err)
-         db.tx {
-           markTournamentScrapeJobCompleted(work).update
-         }
-         List.empty
-     }
-      .foreach{ ids =>
-         logger.info(s"Tournament $work scraped ${ids.size} matches found" )
-      }
+        }.recover { err =>
+          logger.info(
+            s"Tournament $work scraping failed, marking as complete ",
+            err
+          )
+          db.tx {
+            markTournamentScrapeJobCompleted(work).update
+          }
+          List.empty
+        }.foreach { ids =>
+          logger.info(s"Tournament $work scraped ${ids.size} matches found")
+        }
       logger.info("Tournament job ended")
-
-
-
 
     def readNextTournamentScraperJob =
       sql"""
