@@ -153,7 +153,11 @@ const App: React.VFC = () => {
             </Col>
             <Col xs={3}>
               <Button variant="primary" onClick={fetchDommer} disabled={!dommer}>
-                {fetching ? <Spinner as="span" animation="border" size="sm" /> && 'Henter statistikk' : 'Hent statistikk'}
+                {fetching ?
+                    <>
+                        <Spinner as="span" animation="border" size="sm" />
+                        Henter statistikk
+                    </> : 'Hent statistikk'}
               </Button>
             </Col>
           </Row>
