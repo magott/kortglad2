@@ -1,0 +1,38 @@
+# fly.toml app configuration file generated for kortglad-db on 2023-09-29T10:35:40+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "kortglad-db"
+primary_region = "ams"
+
+[env]
+  PRIMARY_REGION = "ams"
+
+[[mounts]]
+  source = "pg_data"
+  destination = "/data"
+
+[checks]
+  [checks.pg]
+    port = 5500
+    type = "http"
+    interval = "15s"
+    timeout = "10s"
+    path = "/flycheck/pg"
+  [checks.role]
+    port = 5500
+    type = "http"
+    interval = "15s"
+    timeout = "10s"
+    path = "/flycheck/role"
+  [checks.vm]
+    port = 5500
+    type = "http"
+    interval = "10s"
+    timeout = "1m0s"
+    path = "/flycheck/vm"
+
+[[metrics]]
+  port = 9187
+  path = "/metrics"
