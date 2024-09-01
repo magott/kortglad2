@@ -83,9 +83,10 @@ object Scraper:
       .map(row =>
         Uri
           .fromString(row.select("td.table--mobile__result > a").attr("href"))
-          .query.as[FiksId]
+          .query
+          .as[FiksId]
       )
-      .toList
+      .toSet
 
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
@@ -104,7 +105,8 @@ object Scraper:
         FiksIdAndKickoff(
           Uri
             .fromString(tr.select("td > a").get(1).attr("href"))
-            .query.as[FiksId],
+            .query
+            .as[FiksId],
           dateElementToLocalDate(
             tr.selectFirst("td")
           )
@@ -119,27 +121,31 @@ object Scraper:
   def parseMatch(matchId: FiksId, kampDoc: Document) =
     val result =
       kampDoc
-        .select("section.grid > div.flex-box > div.match__result > strong")
+        .select("div.resultWrapper > div.result")
         .text()
     val resultIsSet = !result.isBlank
     if (resultIsSet) {
       val lag = kampDoc
-        .select("span.match__teamname-img")
+        .select("div.badgeCardTitle")
         .asScala
-        .map(_.nextElementSibling().text())
+        .map(_.text())
       val tournament =
         kampDoc.select("div > p:contains(Turnering:) > a").text()
       val home = lag.head
       val away = lag.drop(1).head
-      val dateText = kampDoc.select("span.match__arenainfo-date").text()
+      val datoRegex =
+        """\b(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}\s(0[0-9]|1[0-9]|2[0-3])\.[0-5][0-9]\b"""
+      val dateText = kampDoc.select(s"strong > span:matches($datoRegex)").text()
       val tidspunkt = LocalDateTime.parse(
         dateText,
         DateTimeFormatter.ofPattern("dd.MM.yyyy HH.mm")
       )
-      val matchEvents = kampDoc.select("ul.match__events")
-      val yellows = matchEvents.select("span.icon-yellow-card--events")
-      val yellowReds = matchEvents.select("span.icon-yellow-red-card--events")
-      val reds = matchEvents.select("span.icon-red-card--events")
+      val matchEvents = kampDoc.select("div:contains(Kamphendelser)")
+      val yellows =
+        kampDoc.select("div.timelineEvent > div[data-icon=YellowCard]")
+      val yellowReds =
+        kampDoc.select("div.timelineEvent > div[data-icon=RedYellowRedCard]")
+      val reds = kampDoc.select("div.timelineEvent > div[data-icon=RedCard]")
 
       Some(
         MatchStat(
