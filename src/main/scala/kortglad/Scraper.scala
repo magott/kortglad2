@@ -94,7 +94,7 @@ object Scraper:
 
   def parseMatchList(document: Document): MatchList =
     val body = document.body()
-    val refName = body.select(".fiks-header--person").select("h1 > a").text()
+    val refName = body.select("h1.personName").text()
     log.info(s"Scraping referee named $refName")
     val dommerRader = body
       .select("tr")

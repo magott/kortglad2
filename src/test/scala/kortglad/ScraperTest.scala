@@ -59,6 +59,13 @@ class ScraperTest extends munit.FunSuite {
     assert(parsed.isEmpty, "Postponed match should return None")
   }
 
+  test("can scrape matchlist for referee and name") {
+    val file = ScraperTest.getFile("/match-list.html")
+    val doc = Jsoup.parse(file, "UTF-8")
+    val parsed = Scraper.parseMatchList(doc)
+    assert(parsed.refName == "Morten Andersen-Gott")
+  }
+
 }
 
 object ScraperTest {
