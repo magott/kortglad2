@@ -17,6 +17,7 @@ object App:
           RefereeService(db).updateAndGetRefereeStats(fiksId) match
             case Right(rStats) =>
               StatisticsDatabase(db).addVisit(fiksId, Instant.now())
+              logger.info(s"Web search for referee ${rStats.refereeName}")
               Ok(Json(rStats))
             case Left(error) =>
               if error == AppError.GatewayError then health.killMe()

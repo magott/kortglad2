@@ -33,7 +33,7 @@ class RefereeService(db: Connections) {
           )
         }
 
-        logger.info(s"Scraping total of ${toScrape.size} matches")
+        logger.info(s"Scraping total of ${toScrape.size} matches for ${matchList.refName}")
 
         val matchesPerSeason =
           toScrape

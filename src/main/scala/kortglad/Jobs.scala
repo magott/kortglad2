@@ -50,7 +50,7 @@ object Jobs {
             logger.error(s"Referee refresh failed for $referee", err)
           case Right(updated) =>
             logger.info(
-              s"Referee ${referee.name} [${referee.fiksId.fiksId}] has ${updated.totalNumberOfMatches} indexed"
+              s"Referee ${referee.name} [${referee.fiksId.fiksId}] now has has ${updated.totalNumberOfMatches} indexed"
             )
 
         db.tx {
