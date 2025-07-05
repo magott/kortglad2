@@ -32,9 +32,11 @@ object Scraper:
       Jsoup.connect(matchTemplate(fiksId).toString).get()
     }.toOption
 
+  //Ok v3
   def extractRefereeFromSingleMatch(kampDoc: Document) =
-    val dommerLink =
-      kampDoc.select("div > p > span:contains(Dommer:) + strong > a")
+    val dommerElement = kampDoc.select("div[data-tab=dommere]")
+    //Bruker regex for å få med kun elementet for Dommer, ikke Assistentdommer 4. dommer osv.
+    val dommerLink = dommerElement.select("""tr:has(td:matches(^Dommer$)) a""")
     if (dommerLink.isEmpty) None
     else
       val fiksId = Uri.fromString(dommerLink.attr("href")).query.as[FiksId]
@@ -71,22 +73,19 @@ object Scraper:
   def readTournament(fiksId: FiksId) =
     Jsoup.connect(tournamentTemplate(fiksId).toString).get()
 
-  def parseTournament(doc: Document) =
+  //Ok for v3
+  def parseTournament(doc: Document) = {
     doc
-      .select("tbody > tr:not(.upcoming-match)")
+      .select("div#PrevMatchesContainer a[href*=/kamp/]")
       .asScala
-      .filter { row =>
-        dateElementToLocalDate(row.selectFirst("td.table--mobile__date"))
-          .isBefore(LocalDate.now().plusDays(1)) &&
-        row.select("td.table--mobile__result > a").text().exists(_.isDigit)
-      }
       .map(row =>
         Uri
-          .fromString(row.select("td.table--mobile__result > a").attr("href"))
+          .fromString(row.attr("href"))
           .query
           .as[FiksId]
       )
       .toSet
+  }
 
   case class FiksIdAndKickoff(fiksId: FiksId, kickoff: LocalDate)
   case class MatchList(refName: String, idAndKickoffs: List[FiksIdAndKickoff])
@@ -119,45 +118,72 @@ object Scraper:
     MatchList(refName, fiksIdAndKickoff)
 
   def parseMatch(matchId: FiksId, kampDoc: Document) =
+    logger.info(s"Scraping match with fiks id $matchId")
+    //For å unngå å hente resultater fra tidliger oppgjør, isoler elementet som har kampfakta øverst på siden
+    val kampfaktaElement = kampDoc.select("div[data-page-name=MatchPage_Index]")
     val result =
-      kampDoc
-        .select("div.resultWrapper > div.result")
+      kampfaktaElement
+        .select(
+          " .a_atomicGrid ul > li.atomicHalfWidth > div.a_matchCard > div.cardContent > div.result > div.endResult"
+        )
         .text()
     val resultIsSet = !result.isBlank
     if (resultIsSet) {
-      val lag = kampDoc
-        .select("div.badgeCardTitle")
+      val lag = kampfaktaElement
+        .select("div.cardContent > div.teamName")
         .asScala
         .map(_.text())
       val tournament =
-        kampDoc.select("div > p:contains(Turnering:) > a").text()
+        // Finner 'sibling' a element til span som inneholder 'Turnering:'
+        kampfaktaElement.select("p > span:contains(Turnering:) + a").text()
       val home = lag.head
       val away = lag.drop(1).head
-      val datoRegex =
-        """\b(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}\s(0[0-9]|1[0-9]|2[0-3])\.[0-5][0-9]\b"""
-      val dateText = kampDoc.select(s"strong > span:matches($datoRegex)").text()
-      val tidspunkt = LocalDateTime.parse(
-        dateText,
-        DateTimeFormatter.ofPattern("dd.MM.yyyy HH.mm")
-      )
-      val matchEvents = kampDoc.select("div:contains(Kamphendelser)")
-      val yellows =
-        kampDoc.select("div.timelineEvent > div[data-icon=YellowCard]")
-      val yellowReds =
-        kampDoc.select("div.timelineEvent > div[data-icon=RedYellowRedCard]")
-      val reds = kampDoc.select("div.timelineEvent > div[data-icon=RedCard]")
-
-      Some(
-        MatchStat(
-          matchId,
-          tidspunkt,
-          Option.unless(tournament.isBlank) {
-            tournament
-          },
-          home,
-          away,
-          CardStat(yellows.size(), yellowReds.size(), reds.size())
+      val datoRegex = """^\s*\S+\s+(\d{2}\.\d{2}\.\d{2})$"""
+      val klokkeslettRegex = """^\d{2}\.\d{2}$"""
+      val datoText = kampfaktaElement
+        .select(
+          s"div.matchHeading > div.headingElements > span.headingElement:matches($datoRegex)"
         )
+        .text()
+        .split("""\s+""")
+        .toList
+        .last
+      val klokkeslettText = kampfaktaElement
+        .select(
+          s"div.matchHeading > div.headingElements > span.headingElement:matches($klokkeslettRegex)"
+        )
+        .text()
+
+      val tidspunkt = LocalDateTime.parse(
+        s"$datoText $klokkeslettText",
+        DateTimeFormatter.ofPattern("dd.MM.yy HH.mm")
+      )
+      val matchEvents = kampDoc.select("div[data-tab=kamphendelser]")
+      val yellows =
+        matchEvents.select(
+          "div.timelineEventLine > div.timelineEvent > div[data-icon=YellowCard2]"
+        )
+      val yellowReds =
+        matchEvents.select(
+          "div.timelineEventLine > div.timelineEvent > div[data-icon=RedYellowRedCard2]"
+        )
+      val reds = matchEvents.select(
+        "div.timelineEventLine > div.timelineEvent > div[data-icon=RedCard2]"
+      )
+
+      val stat = MatchStat(
+        matchId,
+        tidspunkt,
+        Option.unless(tournament.isBlank) {
+          tournament
+        },
+        home,
+        away,
+        CardStat(yellows.size(), yellowReds.size(), reds.size())
+      )
+      log.info("Successfully parsed match: " + stat)
+      Some(
+        stat
       )
     } else {
       log.info(s"$matchId does not have a final score reported, skipping")

@@ -10,40 +10,52 @@ class ScraperTest extends munit.FunSuite {
 
   test("can extract referee and fiks id from match page") {
 
-    val file = ScraperTest.getFile("/new-match-page.html")
+    val file = ScraperTest.getFile("/matchpage-v3.html")
 
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.extractRefereeFromSingleMatch(doc)
     assert(parsed.isDefined)
     parsed.foreach(ref =>
-      assertEquals(ref.name, "Morten Andersen-Gott")
-      assertEquals(ref.fiksId, FiksId(4081873))
+      assertEquals(ref.name, "Mohammad Usman Aslam")
+      assertEquals(ref.fiksId, FiksId(2235467))
     )
   }
 
   test("can extract fiks ids from tournament page") {
-    val file = ScraperTest.getFile("/tournament-page.html")
+    val file = ScraperTest.getFile("/tournament-page-v3.html")
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.parseTournament(doc)
     assert(parsed.nonEmpty)
-    assertEquals(parsed.size, 132)
+    assertEquals(parsed.size, 77)
   }
 
   test("can parse match") {
-    val file = ScraperTest.getFile("/new-match-page.html")
+    val file = ScraperTest.getFile("/matchpage-v3.html")
     val doc = Jsoup.parse(file, "UTF-8")
     val matchStat = Scraper.parseMatch(FiksId(1234), doc).get
     println(matchStat.tournament)
     assert(matchStat.tournament.isDefined)
-    assert(matchStat.away == "Åssiden")
-    assert(matchStat.cards.yellow == 2)
-    assert(matchStat.cards.red == 0)
-    assert(matchStat.cards.yellowToRed == 0)
+    assert(matchStat.away == "Molde")
+    assert(matchStat.home == "Brann")
+    assert(matchStat.cards.yellow == 11)
+    assert(matchStat.cards.red == 1)
+    assert(matchStat.cards.yellowToRed == 1)
+  }
+
+  test("can parse match with team name without link") {
+    val file = ScraperTest.getFile("/matchpage-v3-team-without-links.html")
+    val doc = Jsoup.parse(file, "UTF-8")
+    val matchStat = Scraper.parseMatch(FiksId(1234), doc).get
+    println(matchStat.tournament)
+    assert(matchStat.tournament.isDefined)
+    assert(matchStat.home == "Nordstrand")
+    assert(matchStat.away == "Gamle Oslo")
+
   }
 
   test("handles hidden referee gracefully") {
 
-    val file = ScraperTest.getFile("/match-page-hidden-ref.html")
+    val file = ScraperTest.getFile("/matchpage-v3-hidden-ref.html")
 
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.extractRefereeFromSingleMatch(doc)

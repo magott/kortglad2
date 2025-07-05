@@ -47,7 +47,7 @@ def searchReferees(search: String) =
     .split("\\s+")
     .map(_ + ":*")
     .mkString(" & ")
-  println(term)
+//  println(term)
   sql"""
     select fiks_id, name from referee
     where to_tsquery('simple', $term) @@ name_tsv
