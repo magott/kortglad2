@@ -140,7 +140,7 @@ object Scraper:
       val home = lag.head
       val away = lag.drop(1).head
       val datoRegex = """^\s*\S+\s+(\d{2}\.\d{2}\.\d{2})$"""
-      val klokkeslettRegex = """^\d{2}\.\d{2}$"""
+      val klokkeslettRegex = """^\d{2}\:\d{2}$"""
       val datoText = kampfaktaElement
         .select(
           s"div.matchHeading > div.headingElements > span.headingElement:matches($datoRegex)"
@@ -157,7 +157,7 @@ object Scraper:
 
       val tidspunkt = LocalDateTime.parse(
         s"$datoText $klokkeslettText",
-        DateTimeFormatter.ofPattern("dd.MM.yy HH.mm")
+        DateTimeFormatter.ofPattern("dd.MM.yy HH:mm")
       )
       val matchEvents = kampDoc.select("div[data-tab=kamphendelser]")
       val yellows =

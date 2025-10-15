@@ -10,7 +10,7 @@ class ScraperTest extends munit.FunSuite {
 
   test("can extract referee and fiks id from match page") {
 
-    val file = ScraperTest.getFile("/matchpage-v3.html")
+    val file = ScraperTest.getFile("/matchpage-v4.html")
 
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.extractRefereeFromSingleMatch(doc)
@@ -30,7 +30,7 @@ class ScraperTest extends munit.FunSuite {
   }
 
   test("can parse match") {
-    val file = ScraperTest.getFile("/matchpage-v3.html")
+    val file = ScraperTest.getFile("/matchpage-v4.html")
     val doc = Jsoup.parse(file, "UTF-8")
     val matchStat = Scraper.parseMatch(FiksId(1234), doc).get
     println(matchStat.tournament)
