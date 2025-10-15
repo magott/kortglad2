@@ -72,7 +72,7 @@ class ScraperTest extends munit.FunSuite {
   }
 
   test("can scrape matchlist for referee and name") {
-    val file = ScraperTest.getFile("/match-list.html")
+    val file = ScraperTest.getFile("/match-list-2025-10.html")
     val doc = Jsoup.parse(file, "UTF-8")
     val parsed = Scraper.parseMatchList(doc)
     assert(parsed.refName == "Morten Andersen-Gott")

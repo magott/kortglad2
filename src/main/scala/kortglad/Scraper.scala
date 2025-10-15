@@ -95,9 +95,10 @@ object Scraper:
     val body = document.body()
     val refName = body.select("h1.personName").text()
     log.info(s"Scraping referee named $refName")
-    val dommerRader = body
-      .select("tr")
+    val oppdragsrader = body
+      .select("tbody > tr")
       .asScala
+    val dommerRader = oppdragsrader
       .filter(row => hovedDommerIkkeFutsal(row) && spiltKamp(row))
     val fiksIdAndKickoff = dommerRader
       .map(tr =>
@@ -205,7 +206,7 @@ object Scraper:
       .atTime(
         LocalTime.parse(
           rowElement.select("td").get(1).text().trim,
-          DateTimeFormatter.ofPattern("HH.mm")
+          DateTimeFormatter.ofPattern("HH:mm")
         )
       )
       .isBefore(
